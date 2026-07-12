@@ -19,6 +19,27 @@ import { blue } from './colors/00f'
 import { black } from './colors/000'
 import { white } from './colors/fff'
 
+// Fisher–Yates shuffle into a new array (used to scramble the swatch positions on game start)
+function shuffle<T>(items: T[]): T[] {
+	const out = items.slice()
+	for (let i = out.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1))
+		;[out[i], out[j]] = [out[j], out[i]]
+	}
+	return out
+}
+
+const randomOf = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)]
+
+// short win/lose feedback sounds
+function playFx(name: 'correct' | 'wrong') {
+	try {
+		new Audio(`/sound/fx/${name}.aac`).play().catch(() => {})
+	} catch {
+		// ignore
+	}
+}
+
 function App() {
 	// everything the build supports (after the beta feature flag)
 	const ALL_COLORS: Color[] = [red, orange, yellow, green, blue, black, white].filter(isVisible)
@@ -245,13 +266,192 @@ function App() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [lang, refreshCacheCount])
 
+	// In-memory blob cache for game sounds. This works in every browser — including
+	// Safari Lockdown Mode, where the Cache Storage API is disabled — so the game
+	// can pre-load its sounds regardless of whether the offline cache is available.
+	const memAudio = useRef<Map<string, Blob>>(new Map())
+
+	// Fetch the given sounds into memory (skipping ones already held). Falls back to
+	// the network when Cache Storage is unavailable, so it always succeeds if online.
+	const prefetchToMemory = useCallback(async (urls: string[]) => {
+		await Promise.all(urls.map(async url => {
+			if (memAudio.current.has(url)) return
+			try {
+				const response = await getAudio(url)
+				if (!response.ok) return
+				const blob = await response.blob()
+				if (blob.size > 0) memAudio.current.set(url, blob)
+			} catch (e) {
+				console.error(`Failed to preload ${url}:`, e)
+			}
+		}))
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
+
+	// play a color sound without touching the play-icon UI (used by the game).
+	// Prefers the in-memory blob so gameplay is instant and offline-cache-independent.
+	const playFile = useCallback(async (url: string) => {
+		try {
+			let blob = memAudio.current.get(url)
+			if (!blob) {
+				const response = await getAudio(url)
+				blob = await response.blob()
+				if (blob.size > 0) memAudio.current.set(url, blob)
+			}
+			const objectUrl = URL.createObjectURL(blob)
+			if (playingAudio.current) {
+				playingAudio.current.pause()
+				URL.revokeObjectURL(playingAudio.current.src)
+			}
+			const audio = new Audio(objectUrl)
+			audio.onended = () => URL.revokeObjectURL(objectUrl)
+			playingAudio.current = audio
+			await audio.play()
+			refreshCacheCount()
+		} catch (e) {
+			console.error(e)
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [refreshCacheCount])
+
+	// ---- Game mode ----
+	const [gameOn, setGameOn] = useState(false)
+	const [gameColors, setGameColors] = useState<Color[]>([]) // shuffled board for this game
+	const [target, setTarget] = useState<string | null>(null)  // color code to find
+	const [solved, setSolved] = useState<string[]>([])         // codes already played (guessed or given up)
+	const [mistakes, setMistakes] = useState(0)      // wrong taps this game
+	const [giveUps, setGiveUps] = useState(0)        // colors given up on this game
+	const gameStart = useRef(0)                       // Date.now() when the game began
+	const [result, setResult] = useState<{ played: number, total: number, mistakes: number, giveUps: number, ms: number } | null>(null)
+	const [feedback, setFeedback] = useState<{ emoji: string, id: number } | null>(null)
+	const feedbackId = useRef(0)
+	const [preparing, setPreparing] = useState(false) // downloading game sounds before start
+
+	const canPlayGame = LANGUAGES.length > 0 && COLORS.length > 0
+
+	const formatDuration = (ms: number) => {
+		const total = Math.round(ms / 1000)
+		const m = Math.floor(total / 60)
+		const s = total % 60
+		return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`
+	}
+
+	const flashFeedback = (emoji: string) => {
+		feedbackId.current += 1
+		const id = feedbackId.current
+		setFeedback({ emoji, id })
+		setTimeout(() => setFeedback(f => (f && f.id === id ? null : f)), 700)
+	}
+
+	const startGame = async () => {
+		if (!canPlayGame || preparing) return
+		stopSound()
+		const board = shuffle(COLORS)
+		// pre-load every prompt sound before the game begins, so gameplay never waits
+		// on the network — and so it works where Cache Storage is unavailable
+		setPreparing(true)
+		await prefetchToMemory(board.map(c => `/sound/lang/${lang}/${c.code}.aac`))
+		setPreparing(false)
+		const first = randomOf(board)
+		setGameColors(board)
+		setSolved([])
+		setMistakes(0)
+		setGiveUps(0)
+		setResult(null)
+		setName('')
+		gameStart.current = Date.now()
+		setTarget(first.code)
+		setGameOn(true)
+		playFile(`/sound/lang/${lang}/${first.code}.aac`)
+	}
+
+	const endGame = () => {
+		stopSound()
+		setGameOn(false)
+		setTarget(null)
+		setFeedback(null)
+		// show the result for the colors played so far
+		setResult({
+			played: solved.length,
+			total: gameColors.length,
+			mistakes,
+			giveUps,
+			ms: Date.now() - gameStart.current,
+		})
+	}
+
+	// mark the target color played and move on (or finish). mistakesTotal and
+	// giveUpsTotal are the running counts to record if this was the last color.
+	const advance = (code: string, mistakesTotal: number, giveUpsTotal: number) => {
+		const nextSolved = [...solved, code]
+		setSolved(nextSolved)
+		const remaining = gameColors.filter(c => !nextSolved.includes(c.code))
+		if (remaining.length === 0) {
+			// all visible colors played — game over.
+			stopSound()
+			setGameOn(false)
+			setTarget(null)
+			setResult({
+				played: nextSolved.length,
+				total: gameColors.length,
+				mistakes: mistakesTotal,
+				giveUps: giveUpsTotal,
+				ms: Date.now() - gameStart.current,
+			})
+		} else {
+			const next = randomOf(remaining)
+			setTarget(next.code)
+			// let the feedback land before the next prompt
+			setTimeout(() => playFile(`/sound/lang/${lang}/${next.code}.aac`), 650)
+		}
+	}
+
+	const guessColor = (code: string) => {
+		if (target === null || solved.includes(code)) return
+		if (code === target) {
+			playFx('correct')
+			flashFeedback('👍')
+			advance(code, mistakes, giveUps)
+		} else {
+			setMistakes(m => m + 1)
+			playFx('wrong')
+			flashFeedback('👎')
+		}
+	}
+
+	// give up on the current color: counts as played and as a give-up (not a mistake)
+	const giveUp = () => {
+		if (target === null) return
+		const nextGiveUps = giveUps + 1
+		setGiveUps(nextGiveUps)
+		flashFeedback('🤷‍♂️')
+		advance(target, mistakes, nextGiveUps)
+	}
+
+	const board = gameOn ? gameColors : COLORS
+
 	return (
 		<div className="Colors">
 			<div className="top-controls">
+				<button
+					className={(gameOn ? 'game-toggle on' : 'game-toggle') + (preparing ? ' busy' : '')}
+					aria-label={gameOn ? 'End game' : 'Start game'}
+					aria-pressed={gameOn}
+					title={
+						gameOn
+							? 'End game'
+							: (canPlayGame ? 'Start game' : 'Select at least one language and color to play')
+					}
+					disabled={(!gameOn && !canPlayGame) || preparing}
+					onClick={() => (gameOn ? endGame() : startGame())}
+				>
+					🎮
+				</button>
 				<select
 					className="language-select"
 					title="Language of the color name"
 					value={lang}
+					disabled={gameOn}
 					onChange={(e) => {
 						setLang(e.target.value as Language)
 						setName('')
@@ -268,36 +468,70 @@ function App() {
 					colors={ALL_COLORS.map(c => ({ code: c.code }))}
 					caching={caching}
 					cachedCount={cachedCount}
+					locked={gameOn}
 					onChange={updateSettings}
 					onClearCache={clearSoundCache}
 				/>
 			</div>
 			<hgroup>
-				{COLORS.map(c => (
-					<button
-						key={`color-${c.code}`}
-						className={playingCode === c.code ? 'button-color playing' : 'button-color'}
-						style={{ backgroundColor: `#${c.code}` }}
-						title={LANGUAGES.length > 0 ? c.name[lang] : '🤷‍♂️'}
-						onClick={() => {
-							if (LANGUAGES.length === 0) {
-								// every language is hidden: nothing to say
-								setName('🤷‍♂️')
-							} else if (playingCode === c.code) {
-								stopSound()
-							} else {
-								setName(c.name[lang])
-								playSound(c.code)
-							}
-						}}
-					>
-						{playingCode === c.code && <span className="play-icon">▶</span>}
-					</button>
-				))}
+				{board.map(c => {
+					const isSolved = gameOn && solved.includes(c.code)
+					return (
+						<button
+							key={`color-${c.code}`}
+							className={playingCode === c.code ? 'button-color playing' : 'button-color'}
+							style={{ backgroundColor: `#${c.code}` }}
+							title={gameOn ? '' : (LANGUAGES.length > 0 ? c.name[lang] : '🤷‍♂️')}
+							disabled={isSolved}
+							onClick={() => {
+								if (gameOn) {
+									guessColor(c.code)
+								} else if (playingCode === c.code) {
+									stopSound()
+								} else if (LANGUAGES.length === 0) {
+									// every language is hidden: nothing to say
+									setName('🤷‍♂️')
+								} else {
+									setResult(null)
+									setName(c.name[lang])
+									playSound(c.code)
+								}
+							}}
+						>
+							{playingCode === c.code && <span className="play-icon">▶</span>}
+						</button>
+					)
+				})}
 			</hgroup>
 			<hgroup>
-				<h1>{name}</h1>
+				{!gameOn && result ? (
+					<div className="game-result">
+						<span title="Colors played">🏁 {result.played} / {result.total}</span>
+						<span title="Mistakes">❌ {result.mistakes}</span>
+						<span title="Give-ups">🤷‍♂️ {result.giveUps}</span>
+						<span title="Time">⏱️ {formatDuration(result.ms)}</span>
+					</div>
+				) : (
+					<h1>
+						{preparing ? '⏳' : gameOn ? `${solved.length} / ${gameColors.length}` : name}
+					</h1>
+				)}
 			</hgroup>
+			{gameOn && (
+				<button
+					className="game-giveup"
+					aria-label="Give up"
+					title="Give up: reveal this one and move on"
+					onClick={giveUp}
+				>
+					🤷‍♂️
+				</button>
+			)}
+			{feedback && (
+				<div key={feedback.id} className="game-feedback" aria-hidden="true">
+					{feedback.emoji}
+				</div>
+			)}
 		</div>
 	)
 }

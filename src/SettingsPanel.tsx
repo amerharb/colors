@@ -17,11 +17,13 @@ type Props = {
 	caching: boolean,
 	// number of sound files currently in the cache
 	cachedCount: number,
+	// when true (game in progress), the language and color lists can't be changed
+	locked: boolean,
 	onChange: (settings: Settings) => void,
 	onClearCache: () => void,
 }
 
-export default function SettingsPanel({ settings, languages, colors, caching, cachedCount, onChange, onClearCache }: Readonly<Props>) {
+export default function SettingsPanel({ settings, languages, colors, caching, cachedCount, locked, onChange, onClearCache }: Readonly<Props>) {
 	const [open, setOpen] = useState(false)
 	const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -97,6 +99,7 @@ export default function SettingsPanel({ settings, languages, colors, caching, ca
 								type="button"
 								aria-label="Select all languages"
 								title="Select all"
+								disabled={locked}
 								onClick={showAllLanguages}
 							>
 								✅
@@ -105,6 +108,7 @@ export default function SettingsPanel({ settings, languages, colors, caching, ca
 								type="button"
 								aria-label="Deselect all languages"
 								title="Deselect all"
+								disabled={locked}
 								onClick={hideAllLanguages}
 							>
 								⬜
@@ -118,6 +122,7 @@ export default function SettingsPanel({ settings, languages, colors, caching, ca
 										<input
 											type="checkbox"
 											checked={shown}
+											disabled={locked}
 											onChange={() => toggleLanguage(l.code)}
 										/>
 										{l.display}
@@ -133,6 +138,7 @@ export default function SettingsPanel({ settings, languages, colors, caching, ca
 								type="button"
 								aria-label="Select all colors"
 								title="Select all"
+								disabled={locked}
 								onClick={showAllColors}
 							>
 								✅
@@ -141,6 +147,7 @@ export default function SettingsPanel({ settings, languages, colors, caching, ca
 								type="button"
 								aria-label="Deselect all colors"
 								title="Deselect all"
+								disabled={locked}
 								onClick={hideAllColors}
 							>
 								⬜
@@ -158,6 +165,7 @@ export default function SettingsPanel({ settings, languages, colors, caching, ca
 										aria-pressed={shown}
 										aria-label={c.code}
 										title={c.code}
+										disabled={locked}
 										onClick={() => toggleColor(c.code)}
 									/>
 								)
