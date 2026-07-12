@@ -14,12 +14,16 @@ export type Settings = {
 	// so newly added languages/colors are visible by default
 	hiddenLanguages: Language[],
 	hiddenColors: string[],
+	// when on, all visible sounds are downloaded to the cache, and newly shown
+	// languages/colors are cached as soon as they are enabled
+	flightMode: boolean,
 }
 
 export const DEFAULT_SETTINGS: Settings = {
 	theme: 'system',
 	hiddenLanguages: [],
 	hiddenColors: [],
+	flightMode: false,
 }
 
 const STORAGE_KEY = 'colors:settings'

@@ -10,3 +10,7 @@
   to stop.
 - Settings (⚙️): theme (system / light / dark), plus language and color
   show/hide checklists, persisted in localStorage.
+- Flight mode (✈️): caches all visible sound files in the browser's Cache Storage
+  for offline playback, with a cache count (🔊) and clear button (🗑️); newly
+  shown languages/colors are cached immediately, and turning it off keeps the
+  cached files.
