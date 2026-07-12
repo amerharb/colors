@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/amerharb/colors)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/amerharb/colors)
 # Colors
 
 Small react project to show colors (as swatches) and display the color name in
@@ -7,6 +7,8 @@ the selected language. Sister project of
 
 ## Colors supported
 - Red `#F00`
+- Orange `#F80`
+- Yellow `#FF0`
 - Green `#0F0`
 - Blue `#00F`
 - Black `#000`
