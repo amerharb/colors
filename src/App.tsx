@@ -1,5 +1,5 @@
 import './App.css'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import SettingsPanel from './SettingsPanel'
 import { Color, Language } from './colors/Color'
 import { isVisible } from './featureFlags'
@@ -28,6 +28,19 @@ function App() {
 	]
 	const ALL_LANGUAGES = LANGUAGE_DEFS.filter(isVisible)
 
+	// the sound currently playing, so starting a new one can stop it first
+	const playingAudio = useRef<HTMLAudioElement | null>(null)
+	// code of the color whose sound is playing, to show the play icon on its button
+	const [playingCode, setPlayingCode] = useState<string | null>(null)
+
+	const stopSound = useCallback(() => {
+		if (playingAudio.current) {
+			playingAudio.current.pause()
+			playingAudio.current = null
+		}
+		setPlayingCode(null)
+	}, [])
+
 	// user settings (theme + which languages/colors to show on the main screen)
 	const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
 	useEffect(() => {
@@ -35,7 +48,21 @@ function App() {
 		setSettings(loaded)
 		applyTheme(loaded.theme)
 	}, [])
+
+	// language of the displayed and spoken color name; defaults to the browser's
+	// preferred language on first load (the fallback effect below keeps it visible)
+	const [lang, setLang] = useState<Language>(() => preferredLanguage())
+	const [name, setName] = useState('')
+
 	const updateSettings = (next: Settings) => {
+		// stop playback when its color, or the selected language, just got hidden —
+		// otherwise the sound would keep playing with no button left to stop it
+		if (
+			(playingCode && next.hiddenColors.includes(playingCode)) ||
+			next.hiddenLanguages.includes(lang)
+		) {
+			stopSound()
+		}
 		setSettings(next)
 		saveSettings(next)
 		applyTheme(next.theme)
@@ -45,11 +72,6 @@ function App() {
 	const COLORS = ALL_COLORS.filter(c => !settings.hiddenColors.includes(c.code))
 	const LANGUAGES = ALL_LANGUAGES.filter(l => !settings.hiddenLanguages.includes(l.code))
 
-	// language of the displayed color name; defaults to the browser's preferred
-	// language on first load (the fallback effect below keeps it visible)
-	const [lang, setLang] = useState<Language>(() => preferredLanguage())
-	const [name, setName] = useState('')
-
 	// if the selected language gets hidden in settings, fall back to the first visible one
 	useEffect(() => {
 		if (LANGUAGES.length > 0 && !LANGUAGES.some(l => l.code === lang)) {
@@ -58,6 +80,15 @@ function App() {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [settings.hiddenLanguages])
+
+	const playSound = useCallback((code: string) => {
+		stopSound()
+		const audio = new Audio(`/sound/lang/${lang}/${code}.aac`)
+		audio.onended = () => setPlayingCode(null)
+		audio.play().catch(() => {})
+		playingAudio.current = audio
+		setPlayingCode(code)
+	}, [lang, stopSound])
 
 	return (
 		<div className="Colors">
@@ -69,6 +100,7 @@ function App() {
 					onChange={(e) => {
 						setLang(e.target.value as Language)
 						setName('')
+						stopSound()
 					}}
 				>
 					{LANGUAGES.map(l => (
@@ -86,11 +118,23 @@ function App() {
 				{COLORS.map(c => (
 					<button
 						key={`color-${c.code}`}
-						className="button-color"
+						className={playingCode === c.code ? 'button-color playing' : 'button-color'}
 						style={{ backgroundColor: `#${c.code}` }}
 						title={LANGUAGES.length > 0 ? c.name[lang] : '🤷‍♂️'}
-						onClick={() => setName(LANGUAGES.length > 0 ? c.name[lang] : '🤷‍♂️')}
-					/>
+						onClick={() => {
+							if (LANGUAGES.length === 0) {
+								// every language is hidden: nothing to say
+								setName('🤷‍♂️')
+							} else if (playingCode === c.code) {
+								stopSound()
+							} else {
+								setName(c.name[lang])
+								playSound(c.code)
+							}
+						}}
+					>
+						{playingCode === c.code && <span className="play-icon">▶</span>}
+					</button>
 				))}
 			</hgroup>
 			<hgroup>

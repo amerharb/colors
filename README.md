@@ -22,7 +22,8 @@ Colors are defined with 3-digit hex codes.
 
 ## How it works
 Pick a language from the dropdown in the top right, then click a color swatch to
-see its name written in that language.
+hear its name spoken and see it written in that language. Click the swatch again
+(▶ while it plays) to stop.
 
 - Settings (⚙️ top right): theme (system / light / dark, system is the default),
   a language checklist and a color grid to show/hide anything on the main screen
@@ -32,20 +33,28 @@ see its name written in that language.
   browser's language settings.
 
 ## How to contribute
+### Media files
+Each color has one sound file in AAC format per language, with the spoken color
+name. Audio files live under `public/sound/lang/<lang>/<code>.aac`, for example
+`public/sound/lang/en/f00.aac` for Red in English (the `<code>` is the color's
+3-digit hex).
+
 ### Coding
 Colors is an open source project built on Vite, React 19, TypeScript v6.x and
 npm. All the code is Frontend, no backend needed.
 
 To add a color:
-1. Create `src/colors/<code>.ts` exporting a `Color` (`code`, `name`, `hex`) with
-   the name in every supported language.
+1. Create `src/colors/<code>.ts` exporting a `Color` (`code`, `name`) with the
+   name in every supported language.
 2. Import it and add it to the `ALL_COLORS` array in `src/App.tsx`.
+3. Drop the audio files at `public/sound/lang/<lang>/<code>.aac`.
 
 To add a language:
 1. Add its code to the `Language` type in `src/colors/Color.ts` — TypeScript will
    then point out every color file missing the new name.
 2. Add it to the `LANGUAGE_DEFS` array in `src/App.tsx` and to `SPOKEN_LANGUAGES`
    in `src/settingsStore.ts`.
+3. Drop the audio files at `public/sound/lang/<lang>/<code>.aac`.
 
 #### Setup environment
 - Node 20.19 or above
@@ -54,3 +63,8 @@ To add a language:
 - Build: `npm run build` (output in `dist/`)
 - Start dev server: `npm start`
 - Preview production build: `npm run preview`
+
+## Credits
+### For sound
+Color name pronunciations synthesized with the macOS `say` text-to-speech
+voices: English (Samantha), Arabic (Majed), German (Anna) and Swedish (Alva).
