@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0
+- Add colors: Orange `#F80` and Yellow `#FF0` (with spoken names in all four
+  languages).
+
 ## 0.0.1
 - Initial release.
 - Colors: Red `#F00`, Green `#0F0`, Blue `#00F`, Black `#000`, White `#FFF`
