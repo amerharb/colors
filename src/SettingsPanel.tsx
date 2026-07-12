@@ -1,0 +1,177 @@
+import { useEffect, useRef, useState } from 'react'
+import { Language } from './colors/Color'
+import { Theme, Settings } from './settingsStore'
+
+const THEME_OPTIONS: { value: Theme, icon: string, name: string }[] = [
+	{ value: 'system', icon: '🖥️', name: 'System' },
+	{ value: 'light', icon: '☀️', name: 'Light' },
+	{ value: 'dark', icon: '🌙', name: 'Dark' },
+]
+
+type Props = {
+	settings: Settings,
+	// full (beta-filtered) lists, so the checklists always show everything supported
+	languages: { code: Language, display: string }[],
+	colors: { code: string }[],
+	onChange: (settings: Settings) => void,
+}
+
+export default function SettingsPanel({ settings, languages, colors, onChange }: Readonly<Props>) {
+	const [open, setOpen] = useState(false)
+	const containerRef = useRef<HTMLDivElement | null>(null)
+
+	// close the panel when clicking anywhere outside it
+	useEffect(() => {
+		if (!open) return
+		const handleOutside = (e: MouseEvent) => {
+			if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+				setOpen(false)
+			}
+		}
+		document.addEventListener('mousedown', handleOutside)
+		return () => document.removeEventListener('mousedown', handleOutside)
+	}, [open])
+
+	const setTheme = (theme: Theme) => onChange({ ...settings, theme })
+
+	const toggleLanguage = (code: Language) => {
+		const hiddenLanguages = settings.hiddenLanguages.includes(code)
+			? settings.hiddenLanguages.filter(c => c !== code)
+			: [...settings.hiddenLanguages, code]
+		onChange({ ...settings, hiddenLanguages })
+	}
+
+	const toggleColor = (code: string) => {
+		const hiddenColors = settings.hiddenColors.includes(code)
+			? settings.hiddenColors.filter(c => c !== code)
+			: [...settings.hiddenColors, code]
+		onChange({ ...settings, hiddenColors })
+	}
+
+	const showAllLanguages = () => onChange({ ...settings, hiddenLanguages: [] })
+	const hideAllLanguages = () => onChange({ ...settings, hiddenLanguages: languages.map(l => l.code) })
+	const showAllColors = () => onChange({ ...settings, hiddenColors: [] })
+	const hideAllColors = () => onChange({ ...settings, hiddenColors: colors.map(c => c.code) })
+
+	return (
+		<div className="settings" ref={containerRef}>
+			<button
+				type="button"
+				className={open ? 'settings-button open' : 'settings-button'}
+				aria-label="Settings"
+				aria-expanded={open}
+				title="Settings"
+				onClick={() => setOpen(o => !o)}
+			>
+				⚙️
+			</button>
+
+			{open && (
+				<div className="settings-panel" role="dialog" aria-label="Settings">
+					<div className="settings-row">
+						<div className="settings-segmented" role="group" aria-label="Theme">
+							{THEME_OPTIONS.map(opt => (
+								<button
+									key={opt.value}
+									type="button"
+									className={settings.theme === opt.value ? 'segment selected' : 'segment'}
+									aria-pressed={settings.theme === opt.value}
+									aria-label={opt.name}
+									title={opt.name}
+									onClick={() => setTheme(opt.value)}
+								>
+									{opt.icon}
+								</button>
+							))}
+						</div>
+					</div>
+
+					<div className="settings-row">
+						<div className="settings-select-all">
+							<button
+								type="button"
+								aria-label="Select all languages"
+								title="Select all"
+								onClick={showAllLanguages}
+							>
+								✅
+							</button>
+							<button
+								type="button"
+								aria-label="Deselect all languages"
+								title="Deselect all"
+								onClick={hideAllLanguages}
+							>
+								⬜
+							</button>
+						</div>
+						<div className="settings-checklist" role="group" aria-label="Languages">
+							{languages.map(l => {
+								const shown = !settings.hiddenLanguages.includes(l.code)
+								return (
+									<label key={`setting-lang-${l.code}`} className="settings-check">
+										<input
+											type="checkbox"
+											checked={shown}
+											onChange={() => toggleLanguage(l.code)}
+										/>
+										{l.display}
+									</label>
+								)
+							})}
+						</div>
+					</div>
+
+					<div className="settings-row">
+						<div className="settings-select-all">
+							<button
+								type="button"
+								aria-label="Select all colors"
+								title="Select all"
+								onClick={showAllColors}
+							>
+								✅
+							</button>
+							<button
+								type="button"
+								aria-label="Deselect all colors"
+								title="Deselect all"
+								onClick={hideAllColors}
+							>
+								⬜
+							</button>
+						</div>
+						<div className="settings-color-grid" role="group" aria-label="Colors">
+							{colors.map(c => {
+								const shown = !settings.hiddenColors.includes(c.code)
+								return (
+									<button
+										key={`setting-color-${c.code}`}
+										type="button"
+										className={shown ? 'color-toggle' : 'color-toggle hidden'}
+										style={{ backgroundColor: `#${c.code}` }}
+										aria-pressed={shown}
+										aria-label={c.code}
+										title={c.code}
+										onClick={() => toggleColor(c.code)}
+									/>
+								)
+							})}
+						</div>
+					</div>
+
+					<div className="settings-about">
+						<span>v{__APP_VERSION__}</span>
+						<a
+							href="https://github.com/amerharb/colors"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Amer Harb · GitHub
+						</a>
+					</div>
+				</div>
+			)}
+		</div>
+	)
+}

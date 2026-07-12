@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<link rel="icon" href="/favicon.svg"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff"/>
+	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212"/>
+	<meta
+		name="description"
+		content="Learn color names in different languages by their colors"
+	/>
+	<link rel="manifest" href="/manifest.json"/>
+	<title>Colors Web</title>
+</head>
+<body>
+<!-- Apply the saved theme before first paint to avoid a flash of the wrong colors. -->
+<script>(function(){try{var t;var s=localStorage.getItem('colors:settings');if(s){t=JSON.parse(s).theme}else{t=localStorage.getItem('theme')}if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}}catch(e){}})()</script>
+<noscript>You need to enable JavaScript to run this app.</noscript>
+<div id="root"></div>
+<script type="module" src="/src/index.tsx"></script>
+</body>
+</html>

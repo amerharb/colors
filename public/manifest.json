@@ -1,0 +1,15 @@
+{
+  "short_name": "Colors",
+  "name": "Colors",
+  "start_url": "/index.html",
+  "background_color": "#121212",
+  "display": "standalone",
+  "theme_color": "#121212",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
