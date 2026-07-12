@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+- Add game mode (🎮): a random color name is spoken and you tap the matching
+  swatch (👍 correct, 👎 wrong), with a give-up button (🤷‍♂️). Runs through every
+  visible color, then shows played / mistakes / give-ups / time. Language and
+  color lists lock during a game; theme and flight mode stay changeable. Prompt
+  sounds are pre-loaded into memory so gameplay never waits on the network.
+
 ## 0.1.0
 - Add colors: Orange `#F80` and Yellow `#FF0` (with spoken names in all four
   languages).

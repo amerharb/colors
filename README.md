@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/amerharb/colors)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/amerharb/colors)
 # Colors
 
 Small react project to show colors (as swatches) and display the color name in
@@ -35,6 +35,13 @@ hear its name spoken and see it written in that language. Click the swatch again
 - Flight mode (✈️): downloads all visible sounds into the browser's Cache Storage
   so they play offline; anything newly shown while it is on is downloaded right
   away. Turning it off keeps the cached files (🗑️ clears them).
+- Game (🎮 in the top bar): start a guessing game — a random color name is spoken
+  and you tap the matching swatch (👍 correct, 👎 wrong). Stuck? The give-up
+  button (🤷‍♂️) reveals it (tracked separately from mistakes). It runs through
+  every visible color, then shows how many you played, your mistakes, give-ups,
+  and your time; press 🎮 again to stop early. Theme and flight mode stay
+  changeable mid-game; the language and color lists are locked. Needs at least
+  one language and one color visible.
 - First visit: the starting language and which languages are shown come from your
   browser's language settings.
 
@@ -74,3 +81,5 @@ To add a language:
 ### For sound
 Color name pronunciations synthesized with the macOS `say` text-to-speech
 voices: English (Samantha), Arabic (Majed), German (Anna) and Swedish (Alva).
+The game's correct/wrong feedback sounds are shared with the
+[Flags](https://github.com/amerharb/flags) sister project.
