@@ -3,6 +3,9 @@
 ## 0.14.0
 - Align version with the sister project Flags.
 ### Added
+- Support URL parameters for a shareable view: `c` sets which colors are shown
+  (e.g. `?c=f00,0f0,00f`) and `l` sets which languages are shown with the first
+  one selected (e.g. `?l=en,ar`). List order does not affect the on-screen order.
 - Add a color sort setting: by color code (🌈, default), by the selected
   language's names (🗣️, so switching language re-sorts; falls back to code when
   no language is selected), or random (🎲). The random order is fixed until you

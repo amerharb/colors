@@ -92,9 +92,33 @@ function App() {
 	// user settings (theme + which languages/colors to show on the main screen)
 	const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
 	useEffect(() => {
-		const loaded = loadSettings()
+		let loaded = loadSettings()
+
+		// URL params override visibility for a shareable/deep-linked view:
+		//   ?c=f00,0f0,00f  -> only these colors are visible
+		//   ?l=en,ar        -> only these languages are visible; the first is selected
+		// Order in the params does not affect the on-screen order.
+		const params = new URLSearchParams(window.location.search)
+
+		const cParam = params.get('c')
+		if (cParam !== null) {
+			const want = new Set(cParam.split(',').map(s => s.trim()).filter(Boolean))
+			const hiddenColors = ALL_COLORS.map(c => c.code).filter(c => !want.has(c))
+			loaded = { ...loaded, hiddenColors }
+		}
+
+		const lParam = params.get('l')
+		if (lParam !== null) {
+			const valid = new Set(ALL_LANGUAGES.map(l => l.code))
+			const want = lParam.split(',').map(s => s.trim()).filter(c => valid.has(c as Language))
+			const hiddenLanguages = ALL_LANGUAGES.map(l => l.code).filter(c => !want.includes(c))
+			loaded = { ...loaded, hiddenLanguages }
+			if (want.length > 0) setLang(want[0] as Language) // first listed = selected
+		}
+
 		setSettings(loaded)
 		applyTheme(loaded.theme)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	// language of the displayed and spoken color name; defaults to the browser's
