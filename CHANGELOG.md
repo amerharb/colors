@@ -12,6 +12,8 @@
   pick another mode and choose random again, and it covers hidden colors too so
   each keeps its slot when shown.
 ### Changed
+- In the game, a wrong swatch is temporarily disabled with a 👎 marker so you
+  can't tap it again; all such swatches re-enable once you find the correct one
 - Cache all sounds in a single store (IndexedDB) instead of the previous mix of
   Cache Storage and an in-memory map. Simpler, persists across reloads, works in
   Safari Lockdown Mode, and drops the 7-day TTL (the cache lives until cleared

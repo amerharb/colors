@@ -267,6 +267,7 @@ function App() {
 	const [gameColors, setGameColors] = useState<Color[]>([]) // shuffled board for this game
 	const [target, setTarget] = useState<string | null>(null)  // color code to find
 	const [solved, setSolved] = useState<string[]>([])         // codes already played (guessed or given up)
+	const [wrongGuesses, setWrongGuesses] = useState<string[]>([]) // wrong swatches for the CURRENT target (temporarily disabled)
 	const [mistakes, setMistakes] = useState(0)      // wrong taps this game
 	const [giveUps, setGiveUps] = useState(0)        // colors given up on this game
 	const gameStart = useRef(0)                       // Date.now() when the game began
@@ -304,6 +305,7 @@ function App() {
 		const first = randomOf(board)
 		setGameColors(board)
 		setSolved([])
+		setWrongGuesses([])
 		setMistakes(0)
 		setGiveUps(0)
 		setResult(null)
@@ -318,6 +320,7 @@ function App() {
 		stopSound()
 		setGameOn(false)
 		setTarget(null)
+		setWrongGuesses([])
 		setFeedback(null)
 		// show the result for the colors played so far
 		setResult({
@@ -332,6 +335,8 @@ function App() {
 	// mark the target color played and move on (or finish). mistakesTotal and
 	// giveUpsTotal are the running counts to record if this was the last color.
 	const advance = (code: string, mistakesTotal: number, giveUpsTotal: number) => {
+		// reaching the correct answer re-enables the swatches marked wrong this round
+		setWrongGuesses([])
 		const nextSolved = [...solved, code]
 		setSolved(nextSolved)
 		const remaining = gameColors.filter(c => !nextSolved.includes(c.code))
@@ -356,12 +361,14 @@ function App() {
 	}
 
 	const guessColor = (code: string) => {
-		if (target === null || solved.includes(code)) return
+		if (target === null || solved.includes(code) || wrongGuesses.includes(code)) return
 		if (code === target) {
 			playFx('correct')
 			flashFeedback('👍')
 			advance(code, mistakes, giveUps)
 		} else {
+			// temporarily disable this wrong swatch (with a 👎 marker) until the round is won
+			setWrongGuesses(w => (w.includes(code) ? w : [...w, code]))
 			setMistakes(m => m + 1)
 			playFx('wrong')
 			flashFeedback('👎')
@@ -426,13 +433,14 @@ function App() {
 			<hgroup>
 				{board.map(c => {
 					const isSolved = gameOn && solved.includes(c.code)
+					const isWrong = gameOn && wrongGuesses.includes(c.code)
 					return (
 						<button
 							key={`color-${c.code}`}
-							className={playingCode === c.code ? 'button-color playing' : 'button-color'}
+							className={'button-color' + (playingCode === c.code ? ' playing' : '') + (isWrong ? ' wrong' : '')}
 							style={{ backgroundColor: `#${c.code}` }}
 							title={gameOn ? '' : (LANGUAGES.length > 0 ? c.name[lang] : '🤷‍♂️')}
-							disabled={isSolved}
+							disabled={isSolved || isWrong}
 							onClick={() => {
 								if (gameOn) {
 									guessColor(c.code)
@@ -449,6 +457,7 @@ function App() {
 							}}
 						>
 							{playingCode === c.code && <span className="play-icon">▶</span>}
+							{isWrong && <span className="wrong-icon">👎</span>}
 						</button>
 					)
 				})}
