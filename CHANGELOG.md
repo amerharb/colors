@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0
+- Align version with the sister project Flags.
+### Changed
+- Cache all sounds in a single store (IndexedDB) instead of the previous mix of
+  Cache Storage and an in-memory map. Simpler, persists across reloads, works in
+  Safari Lockdown Mode, and drops the 7-day TTL (the cache lives until cleared
+  with the 🗑️ button)
+
 ## 0.2.0
 - Add game mode (🎮): a random color name is spoken and you tap the matching
   swatch (👍 correct, 👎 wrong), with a give-up button (🤷‍♂️). Runs through every

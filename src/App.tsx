@@ -11,6 +11,7 @@ import {
 	applyTheme,
 	preferredLanguage,
 } from './settingsStore'
+import { getAudioBlob, ensureCached, idbCount, idbClear } from './audioCache'
 import { red } from './colors/f00'
 import { orange } from './colors/f80'
 import { yellow } from './colors/ff0'
@@ -83,10 +84,8 @@ function App() {
 	const [name, setName] = useState('')
 
 	const refreshCacheCount = useCallback(async () => {
-		if (!('caches' in globalThis)) return
 		try {
-			const audioCache = await caches.open('audio-cache')
-			setCachedCount((await audioCache.keys()).length)
+			setCachedCount(await idbCount())
 		} catch {
 			// leave the previous count
 		}
@@ -97,99 +96,24 @@ function App() {
 
 	// delete only the downloaded sound files (settings stay); not allowed in flight mode
 	const clearSoundCache = useCallback(async () => {
-		if (!('caches' in globalThis)) return
-		await Promise.all([
-			caches.delete('audio-cache'),
-			caches.delete('audio-cache-timestamps'),
-		])
+		try {
+			await idbClear()
+		} catch {
+			// ignore
+		}
 		setCachedCount(0)
 	}, [])
 
-	async function getAudio(audioUrl: string) {
-		const TTL = 1000 * 60 * 60 * 24 * 7 // 7 days
-		if ('caches' in globalThis) {
-			const audioCache = await caches.open('audio-cache')
-			const audioCacheTimestamps = await caches.open('audio-cache-timestamps')
-			const cachedResponse = await audioCache.match(audioUrl)
-
-			if (cachedResponse) {
-				const timestampResponse = await audioCacheTimestamps.match(audioUrl)
-				if (timestampResponse) {
-					const timestamp = await timestampResponse.text()
-					const cachedTime = Number(timestamp)
-					const currentTime = Date.now()
-
-					if (currentTime - cachedTime > TTL) {
-						await Promise.all([
-							audioCache.delete(audioUrl),
-							audioCacheTimestamps.delete(audioUrl),
-						])
-					} else {
-						return cachedResponse
-					}
-				}
-			}
-
-			const response = await fetch(audioUrl)
-			// skip caching if response failed or empty, so a 404 page is never cached as audio
-			if (!response.ok || !response.headers.get('Content-Length') || response.headers.get('Content-Length') === '0') {
-				return response
-			}
-
-			await audioCache.put(audioUrl, response.clone())
-			const timestampResponse = new Response(Date.now().toString())
-			await audioCacheTimestamps.put(audioUrl, timestampResponse)
-
-			return response
-		} else {
-			return await fetch(audioUrl)
-		}
-	}
-
-	// Download the given sound files into the cache (already-cached ones are skipped,
-	// so incremental calls only fetch what is missing). Never deletes anything:
-	// switching flight mode off keeps the cached files.
-	async function cacheAudioUrls(audioUrls: string[]) {
-		// Some browsers like Safari disable Cache Storage in lockdown mode
-		if (!('caches' in globalThis)) {
-			console.warn('Cache Storage API not available; skipping flight mode cache')
-			return
-		}
+	// Flight mode: download the given sounds into the cache, showing the busy state.
+	const cacheAudioUrls = useCallback(async (audioUrls: string[]) => {
 		setCaching(true)
 		try {
-			const [audioCache, audioCacheTimestamps] = await Promise.all([
-				caches.open('audio-cache'),
-				caches.open('audio-cache-timestamps'),
-			])
-
-			await Promise.all(
-				audioUrls.map(async url => {
-					try {
-						// already downloaded earlier — keep it
-						if (await audioCache.match(url)) {
-							return
-						}
-						const res = await fetch(url)
-						if (res.ok && res.body && res.headers.get('Content-Length') && res.headers.get('Content-Length') !== '0') {
-							await Promise.all([
-								audioCache.put(url, res.clone()),
-								audioCacheTimestamps.put(url, new Response(Date.now().toString())),
-							])
-						} else {
-							console.warn(`Failed to cache: ${url} (status: ${res.status})`)
-						}
-					} catch (err) {
-						console.error(`Error fetching ${url}:`, err)
-					}
-				}),
-			)
-		} catch (error) {
-			console.error('Failed to cache audio files:', error)
+			await ensureCached(audioUrls)
 		} finally {
 			setCaching(false)
 			refreshCacheCount()
 		}
-	}
+	}, [refreshCacheCount])
 
 	const updateSettings = (next: Settings) => {
 		// stop playback when its color, or the selected language, just got hidden —
@@ -243,9 +167,8 @@ function App() {
 
 	const playSound = useCallback(async (code: string) => {
 		try {
-			const audioUrl = `/sound/lang/${lang}/${code}.aac`
-			const response = await getAudio(audioUrl)
-			const blob = await response.blob()
+			const blob = await getAudioBlob(`/sound/lang/${lang}/${code}.aac`)
+			if (!blob) return
 			const objectUrl = URL.createObjectURL(blob)
 			if (playingAudio.current) {
 				playingAudio.current.pause()
@@ -263,41 +186,14 @@ function App() {
 		} catch (e) {
 			console.error(e)
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [lang, refreshCacheCount])
 
-	// In-memory blob cache for game sounds. This works in every browser — including
-	// Safari Lockdown Mode, where the Cache Storage API is disabled — so the game
-	// can pre-load its sounds regardless of whether the offline cache is available.
-	const memAudio = useRef<Map<string, Blob>>(new Map())
-
-	// Fetch the given sounds into memory (skipping ones already held). Falls back to
-	// the network when Cache Storage is unavailable, so it always succeeds if online.
-	const prefetchToMemory = useCallback(async (urls: string[]) => {
-		await Promise.all(urls.map(async url => {
-			if (memAudio.current.has(url)) return
-			try {
-				const response = await getAudio(url)
-				if (!response.ok) return
-				const blob = await response.blob()
-				if (blob.size > 0) memAudio.current.set(url, blob)
-			} catch (e) {
-				console.error(`Failed to preload ${url}:`, e)
-			}
-		}))
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
-
 	// play a color sound without touching the play-icon UI (used by the game).
-	// Prefers the in-memory blob so gameplay is instant and offline-cache-independent.
+	// Reads from the cache (IndexedDB, works in Safari Lockdown) or the network.
 	const playFile = useCallback(async (url: string) => {
 		try {
-			let blob = memAudio.current.get(url)
-			if (!blob) {
-				const response = await getAudio(url)
-				blob = await response.blob()
-				if (blob.size > 0) memAudio.current.set(url, blob)
-			}
+			const blob = await getAudioBlob(url)
+			if (!blob) return
 			const objectUrl = URL.createObjectURL(blob)
 			if (playingAudio.current) {
 				playingAudio.current.pause()
@@ -307,12 +203,10 @@ function App() {
 			audio.onended = () => URL.revokeObjectURL(objectUrl)
 			playingAudio.current = audio
 			await audio.play()
-			refreshCacheCount()
 		} catch (e) {
 			console.error(e)
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [refreshCacheCount])
+	}, [])
 
 	// ---- Game mode ----
 	const [gameOn, setGameOn] = useState(false)
@@ -348,9 +242,10 @@ function App() {
 		stopSound()
 		const board = shuffle(COLORS)
 		// pre-load every prompt sound before the game begins, so gameplay never waits
-		// on the network — and so it works where Cache Storage is unavailable
+		// on the network (cached in IndexedDB, which also works in Safari Lockdown)
 		setPreparing(true)
-		await prefetchToMemory(board.map(c => `/sound/lang/${lang}/${c.code}.aac`))
+		await ensureCached(board.map(c => `/sound/lang/${lang}/${c.code}.aac`))
+		refreshCacheCount()
 		setPreparing(false)
 		const first = randomOf(board)
 		setGameColors(board)
