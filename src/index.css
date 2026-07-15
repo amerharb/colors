@@ -309,14 +309,14 @@ button:active {
 
 /* small leading indicator (e.g. the sort ⇵) inside a segmented row */
 .settings-segmented-icon {
-	font-size: 16px;
+	font-size: 20px;
 	line-height: 1;
 	flex: none;
 }
 
 .settings-segmented .segment {
 	flex: 1;
-	font-size: 12px;
+	font-size: 20px;
 	font-weight: 500;
 	padding: 8px 4px;
 	margin: 0;
