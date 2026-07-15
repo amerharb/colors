@@ -8,7 +8,7 @@
  * All helpers fail soft: if IndexedDB is unavailable, reads/writes are skipped and
  * playback falls back to the network (getAudioBlob).
  */
-const DB_NAME = 'flags-audio'
+const DB_NAME = 'colors-audio'
 const STORE = 'sounds'
 
 let dbPromise: Promise<IDBDatabase> | null = null
