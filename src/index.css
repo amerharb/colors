@@ -101,19 +101,19 @@ button:active {
 	text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
-/* a correctly-guessed swatch is disabled and dimmed during the game */
+/* disabled swatches during the game keep their TRUE color (this is a colors app);
+   the state is shown only by a corner marker, never by dimming the fill */
 .button-color:disabled {
-	opacity: 0.25;
 	cursor: default;
 }
 
-/* a swatch guessed wrong this round: temporarily disabled but kept legible, with a 👎 */
 .button-color.wrong:disabled {
-	opacity: 0.7;
 	cursor: not-allowed;
 }
 
-.wrong-icon {
+/* corner state marker (✅ solved / 👎 wrong); no background so the color shows
+   through, with a soft shadow to stay legible on any swatch */
+.swatch-mark {
 	position: absolute;
 	top: 6px;
 	right: 8px;

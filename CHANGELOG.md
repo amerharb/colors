@@ -11,6 +11,9 @@
   no language is selected), or random (🎲, reshuffles every time you choose it).
   The random order covers hidden colors too, so each keeps its slot when shown.
 ### Changed
+- In the game, disabled swatches (solved or guessed wrong) keep their true
+  color instead of being dimmed — the state is shown only by a corner marker
+  (👍 solved, 👎 wrong), so the color is never misrepresented
 - In the game, a wrong swatch is temporarily disabled with a 👎 marker so you
   can't tap it again; all such swatches re-enable once you find the correct one
 - Cache all sounds in a single store (IndexedDB) instead of the previous mix of

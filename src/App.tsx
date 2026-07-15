@@ -472,7 +472,8 @@ function App() {
 							}}
 						>
 							{playingCode === c.code && <span className="play-icon">▶</span>}
-							{isWrong && <span className="wrong-icon">👎</span>}
+							{isSolved && <span className="swatch-mark">👍</span>}
+							{isWrong && <span className="swatch-mark">👎</span>}
 						</button>
 					)
 				})}
