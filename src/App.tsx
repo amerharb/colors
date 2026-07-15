@@ -1,5 +1,6 @@
 import './App.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import SettingsPanel from './SettingsPanel'
 import { Color, Language } from './colors/Color'
 import { isVisible } from './featureFlags'
@@ -513,6 +514,7 @@ function App() {
 					{feedback.emoji}
 				</div>
 			)}
+			<Analytics/>
 		</div>
 	)
 }
