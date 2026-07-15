@@ -204,9 +204,9 @@ function App() {
 		applyTheme(next.theme)
 	}
 
-	// choose a sort mode for the swatches; picking random (from another mode) reshuffles
+	// choose a sort mode for the swatches; choosing random reshuffles every time
 	const setSort = (mode: SortMode) => {
-		if (mode === 'random' && settings.sortMode !== 'random') {
+		if (mode === 'random') {
 			updateSettings({ ...settings, sortMode: 'random', randomOrder: shuffle(ALL_COLORS.map(c => c.code)) })
 		} else {
 			updateSettings({ ...settings, sortMode: mode })

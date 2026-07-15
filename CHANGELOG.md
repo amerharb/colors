@@ -8,9 +8,8 @@
   one selected (e.g. `?l=en,ar`). List order does not affect the on-screen order.
 - Add a color sort setting: by color code (🌈, default), by the selected
   language's names (🗣️, so switching language re-sorts; falls back to code when
-  no language is selected), or random (🎲). The random order is fixed until you
-  pick another mode and choose random again, and it covers hidden colors too so
-  each keeps its slot when shown.
+  no language is selected), or random (🎲, reshuffles every time you choose it).
+  The random order covers hidden colors too, so each keeps its slot when shown.
 ### Changed
 - In the game, a wrong swatch is temporarily disabled with a 👎 marker so you
   can't tap it again; all such swatches re-enable once you find the correct one
