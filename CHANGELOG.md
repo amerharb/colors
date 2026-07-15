@@ -2,6 +2,12 @@
 
 ## 0.14.0
 - Align version with the sister project Flags.
+### Added
+- Add a color sort setting: by color code (🌈, default), by the selected
+  language's names (🗣️, so switching language re-sorts; falls back to code when
+  no language is selected), or random (🎲). The random order is fixed until you
+  pick another mode and choose random again, and it covers hidden colors too so
+  each keeps its slot when shown.
 ### Changed
 - Cache all sounds in a single store (IndexedDB) instead of the previous mix of
   Cache Storage and an in-memory map. Simpler, persists across reloads, works in

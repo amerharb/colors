@@ -8,6 +8,12 @@ import { Language } from './colors/Color'
 
 export type Theme = 'system' | 'light' | 'dark'
 
+// how the swatches are ordered on the main screen:
+//   'code'   — by color code / hex (the default)
+//   'lang'   — by the color's name in the selected language (falls back to code)
+//   'random' — a fixed random order (see Settings.randomOrder)
+export type SortMode = 'code' | 'lang' | 'random'
+
 export type Settings = {
 	theme: Theme,
 	// codes the user chose to hide from the main screen; empty = show everything,
@@ -17,6 +23,11 @@ export type Settings = {
 	// when on, all visible sounds are downloaded to the cache, and newly shown
 	// languages/colors are cached as soon as they are enabled
 	flightMode: boolean,
+	// order the swatches are shown in on the main screen
+	sortMode: SortMode,
+	// the frozen random order (color codes) used when sortMode === 'random'.
+	// covers every color, including hidden ones, so a swatch keeps its slot when shown.
+	randomOrder: string[],
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -24,6 +35,8 @@ export const DEFAULT_SETTINGS: Settings = {
 	hiddenLanguages: [],
 	hiddenColors: [],
 	flightMode: false,
+	sortMode: 'code',
+	randomOrder: [],
 }
 
 const STORAGE_KEY = 'colors:settings'

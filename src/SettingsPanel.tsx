@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { Language } from './colors/Color'
-import { Theme, Settings } from './settingsStore'
+import { Theme, SortMode, Settings } from './settingsStore'
 
 const THEME_OPTIONS: { value: Theme, icon: string, name: string }[] = [
 	{ value: 'system', icon: '🖥️', name: 'System' },
 	{ value: 'light', icon: '☀️', name: 'Light' },
 	{ value: 'dark', icon: '🌙', name: 'Dark' },
+]
+
+const SORT_OPTIONS: { value: SortMode, icon: string, name: string }[] = [
+	{ value: 'code', icon: '🌈', name: 'Sort by color code' },
+	{ value: 'lang', icon: '🗣️', name: 'Sort by selected language' },
+	{ value: 'random', icon: '🎲', name: 'Random order' },
 ]
 
 type Props = {
@@ -20,10 +26,11 @@ type Props = {
 	// when true (game in progress), the language and color lists can't be changed
 	locked: boolean,
 	onChange: (settings: Settings) => void,
+	onSetSort: (mode: SortMode) => void,
 	onClearCache: () => void,
 }
 
-export default function SettingsPanel({ settings, languages, colors, caching, cachedCount, locked, onChange, onClearCache }: Readonly<Props>) {
+export default function SettingsPanel({ settings, languages, colors, caching, cachedCount, locked, onChange, onSetSort, onClearCache }: Readonly<Props>) {
 	const [open, setOpen] = useState(false)
 	const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -86,6 +93,25 @@ export default function SettingsPanel({ settings, languages, colors, caching, ca
 									aria-label={opt.name}
 									title={opt.name}
 									onClick={() => setTheme(opt.value)}
+								>
+									{opt.icon}
+								</button>
+							))}
+						</div>
+					</div>
+
+					<div className="settings-row">
+						<div className="settings-segmented" role="group" aria-label="Sort colors">
+							<span className="settings-segmented-icon" aria-hidden="true">⇵</span>
+							{SORT_OPTIONS.map(opt => (
+								<button
+									key={opt.value}
+									type="button"
+									className={settings.sortMode === opt.value ? 'segment selected' : 'segment'}
+									aria-pressed={settings.sortMode === opt.value}
+									aria-label={opt.name}
+									title={opt.name}
+									onClick={() => onSetSort(opt.value)}
 								>
 									{opt.icon}
 								</button>
