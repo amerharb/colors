@@ -52,7 +52,7 @@ function sortColors(colors: Color[], mode: SortMode, lang: Language, hasLanguage
 }
 
 // short win/lose feedback sounds
-function playFx(name: 'correct' | 'wrong') {
+function playFx(name: 'correct' | 'wrong' | 'giveup') {
 	try {
 		new Audio(`/sound/fx/${name}.aac`).play().catch(() => {})
 	} catch {
@@ -279,6 +279,7 @@ function App() {
 	const [wrongGuesses, setWrongGuesses] = useState<string[]>([]) // wrong swatches for the CURRENT target (temporarily disabled)
 	const [mistakes, setMistakes] = useState(0)      // wrong taps this game
 	const [giveUps, setGiveUps] = useState(0)        // colors given up on this game
+	const [gaveUpCodes, setGaveUpCodes] = useState<string[]>([]) // codes given up on, to mark them 🤷‍♂️
 	const gameStart = useRef(0)                       // Date.now() when the game began
 	const [result, setResult] = useState<{ played: number, total: number, mistakes: number, giveUps: number, ms: number } | null>(null)
 	const [feedback, setFeedback] = useState<{ emoji: string, id: number } | null>(null)
@@ -317,6 +318,7 @@ function App() {
 		setWrongGuesses([])
 		setMistakes(0)
 		setGiveUps(0)
+		setGaveUpCodes([])
 		setResult(null)
 		setName('')
 		gameStart.current = Date.now()
@@ -395,6 +397,8 @@ function App() {
 		if (target === null) return
 		const nextGiveUps = giveUps + 1
 		setGiveUps(nextGiveUps)
+		setGaveUpCodes(g => (g.includes(target) ? g : [...g, target]))
+		playFx('giveup')
 		flashFeedback('🤷‍♂️')
 		advance(target, mistakes, nextGiveUps)
 	}
@@ -447,7 +451,8 @@ function App() {
 			</div>
 			<hgroup>
 				{board.map(c => {
-					const isSolved = gameOn && solved.includes(c.code)
+					const isGivenUp = gameOn && gaveUpCodes.includes(c.code)
+					const isSolved = gameOn && solved.includes(c.code) && !isGivenUp
 					const isWrong = gameOn && wrongGuesses.includes(c.code)
 					return (
 						<button
@@ -455,7 +460,7 @@ function App() {
 							className={'button-color' + (playingCode === c.code ? ' playing' : '') + (isWrong ? ' wrong' : '')}
 							style={{ backgroundColor: `#${c.code}` }}
 							title={gameOn ? '' : (LANGUAGES.length > 0 ? c.name[lang] : '🤷‍♂️')}
-							disabled={isSolved || isWrong}
+							disabled={isSolved || isGivenUp || isWrong}
 							onClick={() => {
 								if (gameOn) {
 									guessColor(c.code)
@@ -473,6 +478,7 @@ function App() {
 						>
 							{playingCode === c.code && <span className="play-icon">▶</span>}
 							{isSolved && <span className="swatch-mark">👍</span>}
+							{isGivenUp && <span className="swatch-mark">🤷‍♂️</span>}
 							{isWrong && <span className="swatch-mark">👎</span>}
 						</button>
 					)

@@ -14,6 +14,8 @@
 - In the game, disabled swatches (solved or guessed wrong) keep their true
   color instead of being dimmed — the state is shown only by a corner marker
   (👍 solved, 👎 wrong), so the color is never misrepresented
+- a swatch revealed with "I don't know" is marked 🤷‍♂️ instead of 👍 and plays a
+  distinct give-up sound
 - In the game, a wrong swatch is temporarily disabled with a 👎 marker so you
   can't tap it again; all such swatches re-enable once you find the correct one
 - Cache all sounds in a single store (IndexedDB) instead of the previous mix of
