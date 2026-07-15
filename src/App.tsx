@@ -80,7 +80,16 @@ function App() {
 	// how many sound files are currently in the cache, shown in settings
 	const [cachedCount, setCachedCount] = useState(0)
 
+	// pending "play the next prompt" timer during the game, so it can be cancelled
+	// if the game ends (or is stopped) before it fires — otherwise a late timer
+	// would start a sound after the game is already over
+	const promptTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
 	const stopSound = useCallback(() => {
+		if (promptTimer.current) {
+			clearTimeout(promptTimer.current)
+			promptTimer.current = null
+		}
 		if (playingAudio.current) {
 			playingAudio.current.pause()
 			URL.revokeObjectURL(playingAudio.current.src)
@@ -335,6 +344,12 @@ function App() {
 	// mark the target color played and move on (or finish). mistakesTotal and
 	// giveUpsTotal are the running counts to record if this was the last color.
 	const advance = (code: string, mistakesTotal: number, giveUpsTotal: number) => {
+		// cancel any not-yet-fired next-prompt timer (e.g. the player answered the
+		// last color before the previous prompt was scheduled to play)
+		if (promptTimer.current) {
+			clearTimeout(promptTimer.current)
+			promptTimer.current = null
+		}
 		// reaching the correct answer re-enables the swatches marked wrong this round
 		setWrongGuesses([])
 		const nextSolved = [...solved, code]
@@ -356,7 +371,7 @@ function App() {
 			const next = randomOf(remaining)
 			setTarget(next.code)
 			// let the feedback land before the next prompt
-			setTimeout(() => playFile(`/sound/lang/${lang}/${next.code}.aac`), 650)
+			promptTimer.current = setTimeout(() => playFile(`/sound/lang/${lang}/${next.code}.aac`), 650)
 		}
 	}
 

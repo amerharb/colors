@@ -19,6 +19,11 @@
   Safari Lockdown Mode, and drops the 7-day TTL (the cache lives until cleared
   with the 🗑️ button)
 
+### Fixed
+- In the game, answering the final color before the previous prompt's sound
+  was scheduled to play no longer leaves that sound playing after the game ends
+  (the pending next-prompt timer is now cancelled)
+
 ## 0.2.0
 - Add game mode (🎮): a random color name is spoken and you tap the matching
   swatch (👍 correct, 👎 wrong), with a give-up button (🤷‍♂️). Runs through every
