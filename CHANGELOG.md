@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.14.0
+- Align version with the sister project Flags.
+### Added
+- Support URL parameters for a shareable view: `c` sets which colors are shown
+  (e.g. `?c=f00,0f0,00f`) and `l` sets which languages are shown with the first
+  one selected (e.g. `?l=en,ar`). List order does not affect the on-screen order.
+- Add a color sort setting: by color code (🌈, default), by the selected
+  language's names (🗣️, so switching language re-sorts; falls back to code when
+  no language is selected), or random (🎲, reshuffles every time you choose it).
+  The random order covers hidden colors too, so each keeps its slot when shown.
+### Changed
+- In the game, disabled swatches (solved or guessed wrong) keep their true
+  color instead of being dimmed — the state is shown only by a corner marker
+  (👍 solved, 👎 wrong), so the color is never misrepresented
+- a swatch revealed with "I don't know" is marked 🤷‍♂️ instead of 👍 and plays a
+  distinct give-up sound
+- In the game, a wrong swatch is temporarily disabled with a 👎 marker so you
+  can't tap it again; all such swatches re-enable once you find the correct one
+- Cache all sounds in a single store (IndexedDB) instead of the previous mix of
+  Cache Storage and an in-memory map. Simpler, persists across reloads, works in
+  Safari Lockdown Mode, and drops the 7-day TTL (the cache lives until cleared
+  with the 🗑️ button)
+
+### Fixed
+- In the game, answering the final color before the previous prompt's sound
+  was scheduled to play no longer leaves that sound playing after the game ends
+  (the pending next-prompt timer is now cancelled)
+
 ## 0.2.0
 - Add game mode (🎮): a random color name is spoken and you tap the matching
   swatch (👍 correct, 👎 wrong), with a give-up button (🤷‍♂️). Runs through every

@@ -1,22 +1,25 @@
 import './App.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import SettingsPanel from './SettingsPanel'
 import { Color, Language } from './colors/Color'
 import { isVisible } from './featureFlags'
 import {
 	Settings,
+	SortMode,
 	DEFAULT_SETTINGS,
 	loadSettings,
 	saveSettings,
 	applyTheme,
 	preferredLanguage,
 } from './settingsStore'
+import { getAudioBlob, ensureCached, idbCount, idbClear } from './audioCache'
+import { black } from './colors/000'
+import { blue } from './colors/00f'
+import { green } from './colors/0f0'
 import { red } from './colors/f00'
 import { orange } from './colors/f80'
 import { yellow } from './colors/ff0'
-import { green } from './colors/0f0'
-import { blue } from './colors/00f'
-import { black } from './colors/000'
 import { white } from './colors/fff'
 
 // Fisher–Yates shuffle into a new array (used to scramble the swatch positions on game start)
@@ -31,8 +34,26 @@ function shuffle<T>(items: T[]): T[] {
 
 const randomOf = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)]
 
+// Order the colors for display. 'lang' sorts by the color name in the given
+// language (only when one is selected — otherwise falls back to code); 'random' uses
+// the frozen randomOrder (unknown codes go last); 'code' (default) sorts by code.
+function sortColors(colors: Color[], mode: SortMode, lang: Language, hasLanguage: boolean, randomOrder: string[]): Color[] {
+	const list = colors.slice()
+	if (mode === 'lang' && hasLanguage) {
+		return list.sort((a, b) => a.name[lang].localeCompare(b.name[lang], lang) || a.code.localeCompare(b.code))
+	}
+	if (mode === 'random') {
+		const pos = (code: string) => {
+			const i = randomOrder.indexOf(code)
+			return i === -1 ? Number.MAX_SAFE_INTEGER : i
+		}
+		return list.sort((a, b) => pos(a.code) - pos(b.code) || a.code.localeCompare(b.code))
+	}
+	return list.sort((a, b) => a.code.localeCompare(b.code))
+}
+
 // short win/lose feedback sounds
-function playFx(name: 'correct' | 'wrong') {
+function playFx(name: 'correct' | 'wrong' | 'giveup') {
 	try {
 		new Audio(`/sound/fx/${name}.aac`).play().catch(() => {})
 	} catch {
@@ -42,7 +63,7 @@ function playFx(name: 'correct' | 'wrong') {
 
 function App() {
 	// everything the build supports (after the beta feature flag)
-	const ALL_COLORS: Color[] = [red, orange, yellow, green, blue, black, white].filter(isVisible)
+	const ALL_COLORS: Color[] = [black, blue, green, red, orange, yellow, white].filter(isVisible)
 	const LANGUAGE_DEFS: { code: Language, display: string, beta?: boolean }[] = [
 		{ code: 'en', display: 'English' },
 		{ code: 'ar', display: 'عربي' },
@@ -60,7 +81,16 @@ function App() {
 	// how many sound files are currently in the cache, shown in settings
 	const [cachedCount, setCachedCount] = useState(0)
 
+	// pending "play the next prompt" timer during the game, so it can be cancelled
+	// if the game ends (or is stopped) before it fires — otherwise a late timer
+	// would start a sound after the game is already over
+	const promptTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
 	const stopSound = useCallback(() => {
+		if (promptTimer.current) {
+			clearTimeout(promptTimer.current)
+			promptTimer.current = null
+		}
 		if (playingAudio.current) {
 			playingAudio.current.pause()
 			URL.revokeObjectURL(playingAudio.current.src)
@@ -72,9 +102,33 @@ function App() {
 	// user settings (theme + which languages/colors to show on the main screen)
 	const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
 	useEffect(() => {
-		const loaded = loadSettings()
+		let loaded = loadSettings()
+
+		// URL params override visibility for a shareable/deep-linked view:
+		//   ?c=f00,0f0,00f  -> only these colors are visible
+		//   ?l=en,ar        -> only these languages are visible; the first is selected
+		// Order in the params does not affect the on-screen order.
+		const params = new URLSearchParams(window.location.search)
+
+		const cParam = params.get('c')
+		if (cParam !== null) {
+			const want = new Set(cParam.split(',').map(s => s.trim()).filter(Boolean))
+			const hiddenColors = ALL_COLORS.map(c => c.code).filter(c => !want.has(c))
+			loaded = { ...loaded, hiddenColors }
+		}
+
+		const lParam = params.get('l')
+		if (lParam !== null) {
+			const valid = new Set(ALL_LANGUAGES.map(l => l.code))
+			const want = lParam.split(',').map(s => s.trim()).filter(c => valid.has(c as Language))
+			const hiddenLanguages = ALL_LANGUAGES.map(l => l.code).filter(c => !want.includes(c))
+			loaded = { ...loaded, hiddenLanguages }
+			if (want.length > 0) setLang(want[0] as Language) // first listed = selected
+		}
+
 		setSettings(loaded)
 		applyTheme(loaded.theme)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	// language of the displayed and spoken color name; defaults to the browser's
@@ -83,10 +137,8 @@ function App() {
 	const [name, setName] = useState('')
 
 	const refreshCacheCount = useCallback(async () => {
-		if (!('caches' in globalThis)) return
 		try {
-			const audioCache = await caches.open('audio-cache')
-			setCachedCount((await audioCache.keys()).length)
+			setCachedCount(await idbCount())
 		} catch {
 			// leave the previous count
 		}
@@ -97,99 +149,24 @@ function App() {
 
 	// delete only the downloaded sound files (settings stay); not allowed in flight mode
 	const clearSoundCache = useCallback(async () => {
-		if (!('caches' in globalThis)) return
-		await Promise.all([
-			caches.delete('audio-cache'),
-			caches.delete('audio-cache-timestamps'),
-		])
+		try {
+			await idbClear()
+		} catch {
+			// ignore
+		}
 		setCachedCount(0)
 	}, [])
 
-	async function getAudio(audioUrl: string) {
-		const TTL = 1000 * 60 * 60 * 24 * 7 // 7 days
-		if ('caches' in globalThis) {
-			const audioCache = await caches.open('audio-cache')
-			const audioCacheTimestamps = await caches.open('audio-cache-timestamps')
-			const cachedResponse = await audioCache.match(audioUrl)
-
-			if (cachedResponse) {
-				const timestampResponse = await audioCacheTimestamps.match(audioUrl)
-				if (timestampResponse) {
-					const timestamp = await timestampResponse.text()
-					const cachedTime = Number(timestamp)
-					const currentTime = Date.now()
-
-					if (currentTime - cachedTime > TTL) {
-						await Promise.all([
-							audioCache.delete(audioUrl),
-							audioCacheTimestamps.delete(audioUrl),
-						])
-					} else {
-						return cachedResponse
-					}
-				}
-			}
-
-			const response = await fetch(audioUrl)
-			// skip caching if response failed or empty, so a 404 page is never cached as audio
-			if (!response.ok || !response.headers.get('Content-Length') || response.headers.get('Content-Length') === '0') {
-				return response
-			}
-
-			await audioCache.put(audioUrl, response.clone())
-			const timestampResponse = new Response(Date.now().toString())
-			await audioCacheTimestamps.put(audioUrl, timestampResponse)
-
-			return response
-		} else {
-			return await fetch(audioUrl)
-		}
-	}
-
-	// Download the given sound files into the cache (already-cached ones are skipped,
-	// so incremental calls only fetch what is missing). Never deletes anything:
-	// switching flight mode off keeps the cached files.
-	async function cacheAudioUrls(audioUrls: string[]) {
-		// Some browsers like Safari disable Cache Storage in lockdown mode
-		if (!('caches' in globalThis)) {
-			console.warn('Cache Storage API not available; skipping flight mode cache')
-			return
-		}
+	// Flight mode: download the given sounds into the cache, showing the busy state.
+	const cacheAudioUrls = useCallback(async (audioUrls: string[]) => {
 		setCaching(true)
 		try {
-			const [audioCache, audioCacheTimestamps] = await Promise.all([
-				caches.open('audio-cache'),
-				caches.open('audio-cache-timestamps'),
-			])
-
-			await Promise.all(
-				audioUrls.map(async url => {
-					try {
-						// already downloaded earlier — keep it
-						if (await audioCache.match(url)) {
-							return
-						}
-						const res = await fetch(url)
-						if (res.ok && res.body && res.headers.get('Content-Length') && res.headers.get('Content-Length') !== '0') {
-							await Promise.all([
-								audioCache.put(url, res.clone()),
-								audioCacheTimestamps.put(url, new Response(Date.now().toString())),
-							])
-						} else {
-							console.warn(`Failed to cache: ${url} (status: ${res.status})`)
-						}
-					} catch (err) {
-						console.error(`Error fetching ${url}:`, err)
-					}
-				}),
-			)
-		} catch (error) {
-			console.error('Failed to cache audio files:', error)
+			await ensureCached(audioUrls)
 		} finally {
 			setCaching(false)
 			refreshCacheCount()
 		}
-	}
+	}, [refreshCacheCount])
 
 	const updateSettings = (next: Settings) => {
 		// stop playback when its color, or the selected language, just got hidden —
@@ -228,9 +205,20 @@ function App() {
 		applyTheme(next.theme)
 	}
 
-	// what the main screen actually shows
-	const COLORS = ALL_COLORS.filter(c => !settings.hiddenColors.includes(c.code))
+	// choose a sort mode for the swatches; choosing random reshuffles every time
+	const setSort = (mode: SortMode) => {
+		if (mode === 'random') {
+			updateSettings({ ...settings, sortMode: 'random', randomOrder: shuffle(ALL_COLORS.map(c => c.code)) })
+		} else {
+			updateSettings({ ...settings, sortMode: mode })
+		}
+	}
+
 	const LANGUAGES = ALL_LANGUAGES.filter(l => !settings.hiddenLanguages.includes(l.code))
+	// what the main screen actually shows: all colors sorted by the chosen mode,
+	// then filtered to the visible ones (hidden swatches still hold their sorted slot)
+	const COLORS = sortColors(ALL_COLORS, settings.sortMode, lang, LANGUAGES.length > 0, settings.randomOrder)
+		.filter(c => !settings.hiddenColors.includes(c.code))
 
 	// if the selected language gets hidden in settings, fall back to the first visible one
 	useEffect(() => {
@@ -243,9 +231,8 @@ function App() {
 
 	const playSound = useCallback(async (code: string) => {
 		try {
-			const audioUrl = `/sound/lang/${lang}/${code}.aac`
-			const response = await getAudio(audioUrl)
-			const blob = await response.blob()
+			const blob = await getAudioBlob(`/sound/lang/${lang}/${code}.aac`)
+			if (!blob) return
 			const objectUrl = URL.createObjectURL(blob)
 			if (playingAudio.current) {
 				playingAudio.current.pause()
@@ -263,41 +250,14 @@ function App() {
 		} catch (e) {
 			console.error(e)
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [lang, refreshCacheCount])
 
-	// In-memory blob cache for game sounds. This works in every browser — including
-	// Safari Lockdown Mode, where the Cache Storage API is disabled — so the game
-	// can pre-load its sounds regardless of whether the offline cache is available.
-	const memAudio = useRef<Map<string, Blob>>(new Map())
-
-	// Fetch the given sounds into memory (skipping ones already held). Falls back to
-	// the network when Cache Storage is unavailable, so it always succeeds if online.
-	const prefetchToMemory = useCallback(async (urls: string[]) => {
-		await Promise.all(urls.map(async url => {
-			if (memAudio.current.has(url)) return
-			try {
-				const response = await getAudio(url)
-				if (!response.ok) return
-				const blob = await response.blob()
-				if (blob.size > 0) memAudio.current.set(url, blob)
-			} catch (e) {
-				console.error(`Failed to preload ${url}:`, e)
-			}
-		}))
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
-
 	// play a color sound without touching the play-icon UI (used by the game).
-	// Prefers the in-memory blob so gameplay is instant and offline-cache-independent.
+	// Reads from the cache (IndexedDB, works in Safari Lockdown) or the network.
 	const playFile = useCallback(async (url: string) => {
 		try {
-			let blob = memAudio.current.get(url)
-			if (!blob) {
-				const response = await getAudio(url)
-				blob = await response.blob()
-				if (blob.size > 0) memAudio.current.set(url, blob)
-			}
+			const blob = await getAudioBlob(url)
+			if (!blob) return
 			const objectUrl = URL.createObjectURL(blob)
 			if (playingAudio.current) {
 				playingAudio.current.pause()
@@ -307,20 +267,20 @@ function App() {
 			audio.onended = () => URL.revokeObjectURL(objectUrl)
 			playingAudio.current = audio
 			await audio.play()
-			refreshCacheCount()
 		} catch (e) {
 			console.error(e)
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [refreshCacheCount])
+	}, [])
 
 	// ---- Game mode ----
 	const [gameOn, setGameOn] = useState(false)
 	const [gameColors, setGameColors] = useState<Color[]>([]) // shuffled board for this game
 	const [target, setTarget] = useState<string | null>(null)  // color code to find
 	const [solved, setSolved] = useState<string[]>([])         // codes already played (guessed or given up)
+	const [wrongGuesses, setWrongGuesses] = useState<string[]>([]) // wrong swatches for the CURRENT target (temporarily disabled)
 	const [mistakes, setMistakes] = useState(0)      // wrong taps this game
 	const [giveUps, setGiveUps] = useState(0)        // colors given up on this game
+	const [gaveUpCodes, setGaveUpCodes] = useState<string[]>([]) // codes given up on, to mark them 🤷‍♂️
 	const gameStart = useRef(0)                       // Date.now() when the game began
 	const [result, setResult] = useState<{ played: number, total: number, mistakes: number, giveUps: number, ms: number } | null>(null)
 	const [feedback, setFeedback] = useState<{ emoji: string, id: number } | null>(null)
@@ -348,15 +308,18 @@ function App() {
 		stopSound()
 		const board = shuffle(COLORS)
 		// pre-load every prompt sound before the game begins, so gameplay never waits
-		// on the network — and so it works where Cache Storage is unavailable
+		// on the network (cached in IndexedDB, which also works in Safari Lockdown)
 		setPreparing(true)
-		await prefetchToMemory(board.map(c => `/sound/lang/${lang}/${c.code}.aac`))
+		await ensureCached(board.map(c => `/sound/lang/${lang}/${c.code}.aac`))
+		refreshCacheCount()
 		setPreparing(false)
 		const first = randomOf(board)
 		setGameColors(board)
 		setSolved([])
+		setWrongGuesses([])
 		setMistakes(0)
 		setGiveUps(0)
+		setGaveUpCodes([])
 		setResult(null)
 		setName('')
 		gameStart.current = Date.now()
@@ -369,6 +332,7 @@ function App() {
 		stopSound()
 		setGameOn(false)
 		setTarget(null)
+		setWrongGuesses([])
 		setFeedback(null)
 		// show the result for the colors played so far
 		setResult({
@@ -383,6 +347,14 @@ function App() {
 	// mark the target color played and move on (or finish). mistakesTotal and
 	// giveUpsTotal are the running counts to record if this was the last color.
 	const advance = (code: string, mistakesTotal: number, giveUpsTotal: number) => {
+		// cancel any not-yet-fired next-prompt timer (e.g. the player answered the
+		// last color before the previous prompt was scheduled to play)
+		if (promptTimer.current) {
+			clearTimeout(promptTimer.current)
+			promptTimer.current = null
+		}
+		// reaching the correct answer re-enables the swatches marked wrong this round
+		setWrongGuesses([])
 		const nextSolved = [...solved, code]
 		setSolved(nextSolved)
 		const remaining = gameColors.filter(c => !nextSolved.includes(c.code))
@@ -402,17 +374,19 @@ function App() {
 			const next = randomOf(remaining)
 			setTarget(next.code)
 			// let the feedback land before the next prompt
-			setTimeout(() => playFile(`/sound/lang/${lang}/${next.code}.aac`), 650)
+			promptTimer.current = setTimeout(() => playFile(`/sound/lang/${lang}/${next.code}.aac`), 650)
 		}
 	}
 
 	const guessColor = (code: string) => {
-		if (target === null || solved.includes(code)) return
+		if (target === null || solved.includes(code) || wrongGuesses.includes(code)) return
 		if (code === target) {
 			playFx('correct')
 			flashFeedback('👍')
 			advance(code, mistakes, giveUps)
 		} else {
+			// temporarily disable this wrong swatch (with a 👎 marker) until the round is won
+			setWrongGuesses(w => (w.includes(code) ? w : [...w, code]))
 			setMistakes(m => m + 1)
 			playFx('wrong')
 			flashFeedback('👎')
@@ -424,6 +398,8 @@ function App() {
 		if (target === null) return
 		const nextGiveUps = giveUps + 1
 		setGiveUps(nextGiveUps)
+		setGaveUpCodes(g => (g.includes(target) ? g : [...g, target]))
+		playFx('giveup')
 		flashFeedback('🤷‍♂️')
 		advance(target, mistakes, nextGiveUps)
 	}
@@ -470,19 +446,22 @@ function App() {
 					cachedCount={cachedCount}
 					locked={gameOn}
 					onChange={updateSettings}
+					onSetSort={setSort}
 					onClearCache={clearSoundCache}
 				/>
 			</div>
 			<hgroup>
 				{board.map(c => {
-					const isSolved = gameOn && solved.includes(c.code)
+					const isGivenUp = gameOn && gaveUpCodes.includes(c.code)
+					const isSolved = gameOn && solved.includes(c.code) && !isGivenUp
+					const isWrong = gameOn && wrongGuesses.includes(c.code)
 					return (
 						<button
 							key={`color-${c.code}`}
-							className={playingCode === c.code ? 'button-color playing' : 'button-color'}
+							className={'button-color' + (playingCode === c.code ? ' playing' : '') + (isWrong ? ' wrong' : '')}
 							style={{ backgroundColor: `#${c.code}` }}
 							title={gameOn ? '' : (LANGUAGES.length > 0 ? c.name[lang] : '🤷‍♂️')}
-							disabled={isSolved}
+							disabled={isSolved || isGivenUp || isWrong}
 							onClick={() => {
 								if (gameOn) {
 									guessColor(c.code)
@@ -499,6 +478,9 @@ function App() {
 							}}
 						>
 							{playingCode === c.code && <span className="play-icon">▶</span>}
+							{isSolved && <span className="swatch-mark">👍</span>}
+							{isGivenUp && <span className="swatch-mark">🤷‍♂️</span>}
+							{isWrong && <span className="swatch-mark">👎</span>}
 						</button>
 					)
 				})}
@@ -532,6 +514,7 @@ function App() {
 					{feedback.emoji}
 				</div>
 			)}
+			<Analytics/>
 		</div>
 	)
 }

@@ -101,10 +101,25 @@ button:active {
 	text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
-/* a correctly-guessed swatch is disabled and dimmed during the game */
+/* disabled swatches during the game keep their TRUE color (this is a colors app);
+   the state is shown only by a corner marker, never by dimming the fill */
 .button-color:disabled {
-	opacity: 0.25;
 	cursor: default;
+}
+
+.button-color.wrong:disabled {
+	cursor: not-allowed;
+}
+
+/* corner state marker (✅ solved / 👎 wrong); no background so the color shows
+   through, with a soft shadow to stay legible on any swatch */
+.swatch-mark {
+	position: absolute;
+	top: 6px;
+	right: 8px;
+	font-size: 16px;
+	line-height: 1;
+	text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
 /* game-mode toggle, sits in the top control bar */
@@ -289,11 +304,19 @@ button:active {
 .settings-segmented {
 	display: flex;
 	gap: 6px;
+	align-items: center;
+}
+
+/* small leading indicator (e.g. the sort ⇵) inside a segmented row */
+.settings-segmented-icon {
+	font-size: 20px;
+	line-height: 1;
+	flex: none;
 }
 
 .settings-segmented .segment {
 	flex: 1;
-	font-size: 12px;
+	font-size: 20px;
 	font-weight: 500;
 	padding: 8px 4px;
 	margin: 0;

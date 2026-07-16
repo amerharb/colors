@@ -1,8 +1,9 @@
 {
   "name": "colors",
-  "version": "0.2.0",
+  "version": "0.14.0",
   "private": true,
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "web-vitals": "^5.3.0"
