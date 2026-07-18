@@ -35,12 +35,12 @@ hear its name spoken and see it written in that language. Click the swatch again
 - Flight mode (✈️): downloads all visible sounds into the browser's Cache Storage
   so they play offline; anything newly shown while it is on is downloaded right
   away. Turning it off keeps the cached files (🗑️ clears them).
-- Game (🎮 in the top bar): start a guessing game — a random color name is spoken
+- Game (🕹️ in the top bar): start a guessing game — a random color name is spoken
   and you tap the matching swatch (👍 correct, 👎 wrong). Stuck? The give-up
   button (🤷‍♂️) reveals it (tracked separately from mistakes). It runs through
   every visible color, with your progress (played,
   mistakes, give-ups, time) shown live above the board next to the give-up
-  button; the final result stays there when the game ends. Press 🎮 again to
+  button; the final result stays there when the game ends. Press 🕹️ again to
   stop early. Theme and flight mode stay
   changeable mid-game; the language and color lists are locked. Needs at least
   one language and one color visible.
