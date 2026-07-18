@@ -5,6 +5,10 @@
 - Add `vercel.json` (framework Vite, output directory `dist`) so the Vercel
   deployment configuration is explicit and versioned, like the sister project
   Arqaam
+### Changed
+- Redraw the favicon in the sister projects' shared flat style: four bold
+  color squares (red, green, blue, yellow) without the old white tile and
+  border
 
 ## 0.14.0
 - Align version with the sister project Flags.
