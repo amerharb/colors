@@ -287,6 +287,14 @@ function App() {
 	const feedbackId = useRef(0)
 	const [preparing, setPreparing] = useState(false) // downloading game sounds before start
 
+	// tick every second while the game runs, so the live ⏱️ time updates
+	const [, setClockTick] = useState(0)
+	useEffect(() => {
+		if (!gameOn) return
+		const id = setInterval(() => setClockTick(t => t + 1), 1000)
+		return () => clearInterval(id)
+	}, [gameOn])
+
 	const canPlayGame = LANGUAGES.length > 0 && COLORS.length > 0
 
 	const formatDuration = (ms: number) => {
@@ -306,6 +314,7 @@ function App() {
 	const startGame = async () => {
 		if (!canPlayGame || preparing) return
 		stopSound()
+		setResult(null) // clear a previous game's result so ⏳ shows while preparing
 		const board = shuffle(COLORS)
 		// pre-load every prompt sound before the game begins, so gameplay never waits
 		// on the network (cached in IndexedDB, which also works in Safari Lockdown)
@@ -320,7 +329,6 @@ function App() {
 		setMistakes(0)
 		setGiveUps(0)
 		setGaveUpCodes([])
-		setResult(null)
 		setName('')
 		gameStart.current = Date.now()
 		setTarget(first.code)
@@ -450,6 +458,35 @@ function App() {
 					onClearCache={clearSoundCache}
 				/>
 			</div>
+			<hgroup className="display-area">
+				{gameOn ? (
+					<div className="game-result">
+						<span title="Colors played">🏁 {solved.length} / {gameColors.length}</span>
+						<span title="Mistakes">👎 {mistakes}</span>
+						<span title="Give-ups">🤷‍♂️ {giveUps}</span>
+						<span title="Time">⏱️ {formatDuration(Date.now() - gameStart.current)}</span>
+						<button
+							className="game-giveup"
+							aria-label="Give up"
+							title="Give up: reveal this one and move on"
+							onClick={giveUp}
+						>
+							🤷‍♂️
+						</button>
+					</div>
+				) : result ? (
+					<div className="game-result">
+						<span title="Colors played">🏁 {result.played} / {result.total}</span>
+						<span title="Mistakes">👎 {result.mistakes}</span>
+						<span title="Give-ups">🤷‍♂️ {result.giveUps}</span>
+						<span title="Time">⏱️ {formatDuration(result.ms)}</span>
+					</div>
+				) : (
+					<h1>
+						{preparing ? '⏳' : name}
+					</h1>
+				)}
+			</hgroup>
 			<hgroup>
 				{board.map(c => {
 					const isGivenUp = gameOn && gaveUpCodes.includes(c.code)
@@ -485,30 +522,6 @@ function App() {
 					)
 				})}
 			</hgroup>
-			<hgroup>
-				{!gameOn && result ? (
-					<div className="game-result">
-						<span title="Colors played">🏁 {result.played} / {result.total}</span>
-						<span title="Mistakes">👎 {result.mistakes}</span>
-						<span title="Give-ups">🤷‍♂️ {result.giveUps}</span>
-						<span title="Time">⏱️ {formatDuration(result.ms)}</span>
-					</div>
-				) : (
-					<h1>
-						{preparing ? '⏳' : gameOn ? `${solved.length} / ${gameColors.length}` : name}
-					</h1>
-				)}
-			</hgroup>
-			{gameOn && (
-				<button
-					className="game-giveup"
-					aria-label="Give up"
-					title="Give up: reveal this one and move on"
-					onClick={giveUp}
-				>
-					🤷‍♂️
-				</button>
-			)}
 			{feedback && (
 				<div key={feedback.id} className="game-feedback" aria-hidden="true">
 					{feedback.emoji}

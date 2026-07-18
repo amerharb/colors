@@ -6,6 +6,14 @@
   deployment configuration is explicit and versioned, like the sister project
   Arqaam
 ### Changed
+- Unify the display line into one fixed-height segment (the spelled name, the
+  live game stats and the final result all share it), so entering or leaving
+  game mode never shifts the board; on narrow screens the stats row scales
+  down to stay on one line
+- Move the name/score display line above the board (it was below), show the
+  game stats (🏁 played 👎 mistakes 🤷‍♂️ give-ups ⏱️ time) live during the
+  game — the time ticks every second — instead of only as an end-of-game
+  result, and move the give-up button (🤷‍♂️) into that live stats row
 - In the game result, show the mistakes count with 👎 instead of ❌, matching
   the marker shown on a wrong guess
 - Redraw the favicon in the sister projects' shared flat style: four bold
