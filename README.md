@@ -39,9 +39,10 @@ hear its name spoken and see it written in that language. Click the swatch again
   and you tap the matching swatch (👍 correct, 👎 wrong). Stuck? The give-up
   button (🤷‍♂️) reveals it (tracked separately from mistakes). It runs through
   every visible color, with your progress (played,
-  mistakes, give-ups, time) shown live above the board next to the give-up
-  button; the final result stays there when the game ends. Press 🕹️ again to
-  stop early. Theme and flight mode stay
+  mistakes, give-ups, time) shown live in the app bar next to the round
+  buttons. When every color has been played the round is over — the clock
+  freezes and the score stays — but game mode stays on: ✋ stops a round
+  early, 🔄 starts a fresh one, and pressing 🕹️ again leaves game mode. Theme and flight mode stay
   changeable mid-game; the language and color lists are locked. Needs at least
   one language and one color visible.
 - First visit: the starting language and which languages are shown come from your
