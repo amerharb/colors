@@ -6,6 +6,8 @@
   deployment configuration is explicit and versioned, like the sister project
   Arqaam
 ### Changed
+- In the game result, show the mistakes count with 👎 instead of ❌, matching
+  the marker shown on a wrong guess
 - Redraw the favicon in the sister projects' shared flat style: four bold
   color squares (red, green, blue, yellow) without the old white tile and
   border
