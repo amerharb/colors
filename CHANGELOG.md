@@ -2,6 +2,13 @@
 
 ## 0.15.0
 ### Added
+- Add a mute toggle (🔊/🔇) in the toolbar, right of the game button: while
+  muted nothing plays — names, game prompts or feedback sounds — and whatever
+  is playing at that moment stops
+- During a round, the prompted color's name is written in the display
+  segment (muted or not), so the game can also be played by reading
+- Add a replay button (👂) to the game actions: plays the current prompt
+  again; disabled while muted or between rounds
 - Add `vercel.json` (framework Vite, output directory `dist`) so the Vercel
   deployment configuration is explicit and versioned, like the sister project
   Arqaam

@@ -27,6 +27,8 @@ Pick a language from the dropdown in the top right, then click a color swatch to
 hear its name spoken and see it written in that language. Click the swatch again
 (▶ while it plays) to stop.
 
+- Mute (🔊/🔇, right of 🕹️): silences everything — names, game prompts and
+  feedback sounds — until clicked again.
 - Settings (⚙️ top right): theme (system / light / dark, system is the default),
   a language checklist and a color grid to show/hide anything on the main screen
   (with ✅/⬜ select-all/deselect-all buttons), a flight mode toggle (✈️), and
@@ -40,7 +42,8 @@ hear its name spoken and see it written in that language. Click the swatch again
   button (🤷‍♂️) reveals it (tracked separately from mistakes). It runs through
   every visible color, with your progress (played,
   mistakes, give-ups, time) shown live in the app bar next to the round
-  buttons. When every color has been played the round is over — the clock
+  buttons. The prompted name is also written in the display segment (even
+  while muted), and the 👂 button plays it again. When every color has been played the round is over — the clock
   freezes and the score stays — but game mode stays on: ✋ stops a round
   early, 🔄 starts a fresh one, and pressing 🕹️ again leaves game mode. Theme and flight mode stay
   changeable mid-game; the language and color lists are locked. Needs at least

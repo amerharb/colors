@@ -81,6 +81,12 @@ function App() {
 	// how many sound files are currently in the cache, shown in settings
 	const [cachedCount, setCachedCount] = useState(0)
 
+	// 🔇: when muted, nothing plays (prompts, names, or feedback sounds).
+	// A ref mirrors the state so the audio helpers and pending prompt timers
+	// always see the current value.
+	const [muted, setMuted] = useState(false)
+	const mutedRef = useRef(false)
+
 	// pending "play the next prompt" timer during the game, so it can be cancelled
 	// if the game ends (or is stopped) before it fires — otherwise a late timer
 	// would start a sound after the game is already over
@@ -98,6 +104,14 @@ function App() {
 		}
 		setPlayingCode(null)
 	}, [])
+
+	// mute toggle (🔊/🔇): muting also silences whatever is playing right now
+	const toggleMute = () => {
+		const next = !muted
+		mutedRef.current = next
+		if (next) stopSound()
+		setMuted(next)
+	}
 
 	// user settings (theme + which languages/colors to show on the main screen)
 	const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
@@ -230,6 +244,7 @@ function App() {
 	}, [settings.hiddenLanguages])
 
 	const playSound = useCallback(async (code: string) => {
+		if (mutedRef.current) return
 		try {
 			const blob = await getAudioBlob(`/sound/lang/${lang}/${code}.aac`)
 			if (!blob) return
@@ -255,6 +270,7 @@ function App() {
 	// play a color sound without touching the play-icon UI (used by the game).
 	// Reads from the cache (IndexedDB, works in Safari Lockdown) or the network.
 	const playFile = useCallback(async (url: string) => {
+		if (mutedRef.current) return
 		try {
 			const blob = await getAudioBlob(url)
 			if (!blob) return
@@ -359,6 +375,12 @@ function App() {
 		setEndedAt(Date.now())
 	}
 
+	// 👂: play the current prompt again
+	const replaySound = () => {
+		if (target === null) return
+		playFile(`/sound/lang/${lang}/${target}.aac`)
+	}
+
 	// mark the target color played and move on (or finish the round)
 	const advance = (code: string) => {
 		// cancel any not-yet-fired next-prompt timer (e.g. the player answered the
@@ -389,14 +411,14 @@ function App() {
 	const guessColor = (code: string) => {
 		if (target === null || solved.includes(code) || wrongGuesses.includes(code)) return
 		if (code === target) {
-			playFx('correct')
+			if (!mutedRef.current) playFx('correct')
 			flashFeedback('👍')
 			advance(code)
 		} else {
 			// temporarily disable this wrong swatch (with a 👎 marker) until the round is won
 			setWrongGuesses(w => (w.includes(code) ? w : [...w, code]))
 			setMistakes(m => m + 1)
-			playFx('wrong')
+			if (!mutedRef.current) playFx('wrong')
 			flashFeedback('👎')
 		}
 	}
@@ -406,12 +428,17 @@ function App() {
 		if (target === null) return
 		setGiveUps(g => g + 1)
 		setGaveUpCodes(g => (g.includes(target) ? g : [...g, target]))
-		playFx('giveup')
+		if (!mutedRef.current) playFx('giveup')
 		flashFeedback('🤷‍♂️')
 		advance(target)
 	}
 
 	const board = gameOn ? gameColors : COLORS
+	// what the display segment shows: the prompted name during a round (so the
+	// game is playable while muted), otherwise the last clicked name
+	const displayText = gameOn && target !== null
+		? (gameColors.find(c => c.code === target)?.name[lang] ?? '')
+		: name
 
 	return (
 		<div className="Colors">
@@ -432,6 +459,15 @@ function App() {
 					onClick={() => (gameOn ? exitGame() : startRound())}
 				>
 					🕹️
+				</button>
+				<button
+					className={muted ? 'mute-toggle on' : 'mute-toggle'}
+					aria-label={muted ? 'Unmute' : 'Mute'}
+					aria-pressed={muted}
+					title={muted ? 'Unmute sounds' : 'Mute all sounds'}
+					onClick={toggleMute}
+				>
+					{muted ? '🔇' : '🔊'}
 				</button>
 				<select
 					className="language-select"
@@ -462,7 +498,7 @@ function App() {
 				</div>
 				<div className="display">
 					<h1 className="display-text">
-						{preparing ? '⏳' : name}
+						{preparing ? '⏳' : displayText}
 					</h1>
 				</div>
 				{gameOn && (
@@ -475,6 +511,14 @@ function App() {
 				)}
 				{gameOn && (
 					<div className="game-actions">
+						<button
+							aria-label="Replay the sound"
+							title="Play the prompt again"
+							disabled={muted || target === null}
+							onClick={replaySound}
+						>
+							👂
+						</button>
 						<button
 							aria-label="Give up"
 							title="Give up: reveal this one and move on"
