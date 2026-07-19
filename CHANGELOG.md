@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.15.0
+### Fixed
+- Pressed and selected controls are now clearly visible in dark mode: a new
+  shared `--active-bg` accent (the steel blue Flags already used) backs the
+  game and mute toggles, the open settings gear, selected segments and the
+  flight-mode toggle. They previously used `--surface-hover`, which in dark
+  mode is nearly identical to the normal button background
+### Added
+- Add a mute toggle (🔊/🔇) in the toolbar, right of the game button: while
+  muted nothing plays — names, game prompts or feedback sounds — and whatever
+  is playing at that moment stops
+- During a round, the prompted color's name is written in the display
+  segment (muted or not), so the game can also be played by reading
+- Add a replay button (👂) to the game actions: plays the current prompt
+  again; disabled while muted or between rounds
+- Add `vercel.json` (framework Vite, output directory `dist`) so the Vercel
+  deployment configuration is explicit and versioned, like the sister project
+  Arqaam
+### Changed
+- Change the game toggle emoji from 🎮 to 🕹️ (the classic joystick)
+- Restructure the top of the app into one sticky app bar with four segments,
+  right-to-left: toolbar (🕹️ game, 🔊 mute, language, ⚙️ settings), display
+  (the spoken name), live game score (🏁 played 👎 mistakes 🤷‍♂️ give-ups
+  ⏱️ time, ticking every second) and game actions. The game segments anchor
+  to the left, the toolbar to the right, and the display stretches between
+  them — a long name first shrinks its font (down to a limit) and only then
+  auto-scrolls back and forth. The game segments only appear in game mode,
+  unfolding with a smooth transition; on narrow screens the bar stacks the
+  segments top-to-bottom in the same order, with the display on a full row
+- The game no longer ends by itself: when every color has been played the
+  round is over — the clock freezes and the score stays — but game mode
+  stays on. New round actions sit next to the give-up button (🤷‍♂️): stop
+  (✋) ends the current round early and restart (🔄) starts a fresh one;
+  clicking 🕹️ again leaves game mode and hides the game score and actions
+- In the game result, show the mistakes count with 👎 instead of ❌, matching
+  the marker shown on a wrong guess
+- Redraw the favicon in the sister projects' shared flat style: four bold
+  color squares (red, green, blue, yellow) without the old white tile and
+  border
+
 ## 0.14.0
 - Align version with the sister project Flags.
 ### Added

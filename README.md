@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](https://github.com/amerharb/colors)
+[![Version](https://img.shields.io/badge/version-0.15.0-blue.svg)](https://github.com/amerharb/colors)
 # Colors
 
 Small react project to show colors (as swatches) and display the color name in
@@ -27,6 +27,8 @@ Pick a language from the dropdown in the top right, then click a color swatch to
 hear its name spoken and see it written in that language. Click the swatch again
 (▶ while it plays) to stop.
 
+- Mute (🔊/🔇, right of 🕹️): silences everything — names, game prompts and
+  feedback sounds — until clicked again.
 - Settings (⚙️ top right): theme (system / light / dark, system is the default),
   a language checklist and a color grid to show/hide anything on the main screen
   (with ✅/⬜ select-all/deselect-all buttons), a flight mode toggle (✈️), and
@@ -35,11 +37,15 @@ hear its name spoken and see it written in that language. Click the swatch again
 - Flight mode (✈️): downloads all visible sounds into the browser's Cache Storage
   so they play offline; anything newly shown while it is on is downloaded right
   away. Turning it off keeps the cached files (🗑️ clears them).
-- Game (🎮 in the top bar): start a guessing game — a random color name is spoken
+- Game (🕹️ in the top bar): start a guessing game — a random color name is spoken
   and you tap the matching swatch (👍 correct, 👎 wrong). Stuck? The give-up
   button (🤷‍♂️) reveals it (tracked separately from mistakes). It runs through
-  every visible color, then shows how many you played, your mistakes, give-ups,
-  and your time; press 🎮 again to stop early. Theme and flight mode stay
+  every visible color, with your progress (played,
+  mistakes, give-ups, time) shown live in the app bar next to the round
+  buttons. The prompted name is also written in the display segment (even
+  while muted), and the 👂 button plays it again. When every color has been played the round is over — the clock
+  freezes and the score stays — but game mode stays on: ✋ stops a round
+  early, 🔄 starts a fresh one, and pressing 🕹️ again leaves game mode. Theme and flight mode stay
   changeable mid-game; the language and color lists are locked. Needs at least
   one language and one color visible.
 - First visit: the starting language and which languages are shown come from your
