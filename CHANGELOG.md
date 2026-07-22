@@ -2,6 +2,10 @@
 
 ## [0.16.0] 2026-07-20
 ### Changed
+- Replace the Arabic color-name recordings with a more natural voice, Amany
+  (Microsoft Edge neural text-to-speech, Syrian Arabic), instead of the old
+  macOS Majed. If the old files are already in the sound cache, clear it
+  (🗑️) to hear the new voice
 - In game mode with the round stopped (finished or ✋), the selected language
   can be changed again — the next 🔄 round uses it. It stays locked while a
   round is running, and showing or hiding languages/items in settings stays
