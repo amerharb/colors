@@ -1,7 +1,13 @@
 # Changelog
 
 ## [0.16.0] 2026-07-20
+### Added
+- Add Pink `#F7B` and Purple `#707` (with spoken names in all four languages)
 ### Changed
+- Re-code Orange `f80` → `f70`: the `8` was a mistake, and `7` is the halfway
+  point to `f` so the colors keep even hex steps (the spoken name is unchanged,
+  the sound files moved to the new code). A shared link with the old `?c=f80`
+  no longer matches Orange
 - Replace all the color-name recordings with more natural Microsoft Edge
   neural text-to-speech voices — Ava (English), Amany (Arabic), Katja (German)
   and Sofie (Swedish), the same roster as the sister projects — instead of the

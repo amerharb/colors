@@ -7,10 +7,12 @@ the selected language. Sister project of
 
 ## Colors supported
 - Red `#F00`
-- Orange `#F80`
+- Orange `#F70`
+- Pink `#F7B`
 - Yellow `#FF0`
 - Green `#0F0`
 - Blue `#00F`
+- Purple `#707`
 - Black `#000`
 - White `#FFF`
 
