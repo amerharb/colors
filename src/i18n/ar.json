@@ -42,5 +42,9 @@
 	"group.sort": "ترتيب الألوان",
 	"group.languages": "اللغات",
 	"group.colors": "الألوان",
-	"uiLanguage": "لغة الواجهة"
+	"uiLanguage": "لغة الواجهة",
+	"language.en": "الإنجليزية",
+	"language.ar": "العربية",
+	"language.de": "الألمانية",
+	"language.sv": "السويدية"
 }

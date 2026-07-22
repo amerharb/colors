@@ -29,3 +29,12 @@ export function translator(lang: string): Translate {
 	const base: Partial<Record<string, string>> = en
 	return (key) => dict[key] ?? base[key] ?? key
 }
+
+// a content language's name in the current UI language — e.g. code "ar" →
+// "Arabic" (English UI) / "Arabisch" (German UI) — falling back to the given
+// native name (e.g. عربي) when that pair isn't translated
+export function languageName(t: Translate, code: string, fallback: string): string {
+	const key = `language.${code}`
+	const s = t(key)
+	return s === key ? fallback : s
+}

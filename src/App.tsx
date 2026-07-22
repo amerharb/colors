@@ -18,7 +18,7 @@ import { ensureCached, idbCount, idbClear } from './audioCache'
 import { useAudio } from './useAudio'
 import { useGame } from './useGame'
 import { useFitText } from './useFitText'
-import { translator, UI_LANGUAGES } from './i18n'
+import { translator, languageName, UI_LANGUAGES } from './i18n'
 import { black } from './colors/000'
 import { purple } from './colors/707'
 import { blue } from './colors/00f'
@@ -278,12 +278,12 @@ function App() {
 						}}
 					>
 						{LANGUAGES.map(l => (
-							<option key={`lang-${l.code}`} value={l.code}>{l.display}</option>
+							<option key={`lang-${l.code}`} value={l.code}>{languageName(t, l.code, l.display)}</option>
 						))}
 					</select>
 					<SettingsPanel
 						settings={settings}
-						languages={ALL_LANGUAGES}
+						languages={ALL_LANGUAGES.map(l => ({ code: l.code, display: languageName(t, l.code, l.display) }))}
 						colors={ALL_COLORS.map(c => ({ code: c.code }))}
 						caching={caching}
 						cachedCount={cachedCount}

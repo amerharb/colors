@@ -11,6 +11,11 @@
   UI and the color names can be in different languages. On first run it follows
   the browser (primary language, then any of the browser's languages, else the
   content-language pick, else English)
+- Show the content-language names (in the top dropdown and the settings
+  checklist) in the current interface language — e.g. "Arabic" in an English
+  UI, "Arabisch" in a German UI — falling back to the native name for any
+  untranslated pair. The interface-language dropdown itself keeps native names
+  (English, عربي, Deutsch, Svenska) so it is always self-findable
 - Add Pink `#F7B` and Purple `#707` (with spoken names in all four languages)
 ### Changed
 - Re-code Orange `f80` → `f70`: the `8` was a mistake, and `7` is the halfway

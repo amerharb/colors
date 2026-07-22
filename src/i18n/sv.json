@@ -42,5 +42,9 @@
 	"group.sort": "Sortera färger",
 	"group.languages": "Språk",
 	"group.colors": "Färger",
-	"uiLanguage": "Gränssnittsspråk"
+	"uiLanguage": "Gränssnittsspråk",
+	"language.en": "Engelska",
+	"language.ar": "Arabiska",
+	"language.de": "Tyska",
+	"language.sv": "Svenska"
 }

@@ -42,5 +42,9 @@
 	"group.sort": "Farben sortieren",
 	"group.languages": "Sprachen",
 	"group.colors": "Farben",
-	"uiLanguage": "Oberflächensprache"
+	"uiLanguage": "Oberflächensprache",
+	"language.en": "Englisch",
+	"language.ar": "Arabisch",
+	"language.de": "Deutsch",
+	"language.sv": "Schwedisch"
 }
