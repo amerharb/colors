@@ -1,25 +1,31 @@
 /*
- * Tiny UI-string localization. The interface follows the selected color-name
- * language; any key missing in that language falls back to English. English
- * (en.json) is the source of truth for the full key set — the other files are
- * translations and may omit keys (they'll fall back).
+ * Tiny UI-string localization. The interface follows the selected UI language;
+ * any key missing in that language falls back to English (en.json is the full
+ * key set), and an unknown key resolves to itself as a last resort.
  */
-import { Language } from '../colors/Color'
 import en from './en.json'
 import ar from './ar.json'
 import de from './de.json'
 import sv from './sv.json'
 
 export type MsgKey = keyof typeof en
-// accepts any string so the shared presentational components can stay decoupled
-// from this key set; an unknown key resolves to itself as a last resort
+// accepts any string so the shared presentational components stay decoupled
 export type Translate = (key: string) => string
 
-const DICTS: Record<Language, Partial<Record<MsgKey, string>>> = { en, ar, de, sv }
+// the interface languages offered in the UI-language dropdown, under their own
+// native names (the same set the JSON files above cover)
+export const UI_LANGUAGES: { code: string, display: string }[] = [
+	{ code: 'en', display: 'English' },
+	{ code: 'ar', display: 'عربي' },
+	{ code: 'de', display: 'Deutsch' },
+	{ code: 'sv', display: 'Svenska' },
+]
+
+const DICTS: Record<string, Partial<Record<string, string>>> = { en, ar, de, sv }
 
 // a translate function for the given language, falling back to English
-export function translator(lang: Language): Translate {
-	const dict: Partial<Record<string, string>> = DICTS[lang] ?? {}
+export function translator(lang: string): Translate {
+	const dict = DICTS[lang] ?? {}
 	const base: Partial<Record<string, string>> = en
 	return (key) => dict[key] ?? base[key] ?? key
 }

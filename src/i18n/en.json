@@ -41,5 +41,6 @@
 	"group.theme": "Theme",
 	"group.sort": "Sort colors",
 	"group.languages": "Languages",
-	"group.colors": "Colors"
+	"group.colors": "Colors",
+	"uiLanguage": "Interface language"
 }

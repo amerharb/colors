@@ -41,5 +41,6 @@
 	"group.theme": "السمة",
 	"group.sort": "ترتيب الألوان",
 	"group.languages": "اللغات",
-	"group.colors": "الألوان"
+	"group.colors": "الألوان",
+	"uiLanguage": "لغة الواجهة"
 }

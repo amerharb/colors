@@ -18,7 +18,7 @@ import { ensureCached, idbCount, idbClear } from './audioCache'
 import { useAudio } from './useAudio'
 import { useGame } from './useGame'
 import { useFitText } from './useFitText'
-import { translator } from './i18n'
+import { translator, UI_LANGUAGES } from './i18n'
 import { black } from './colors/000'
 import { purple } from './colors/707'
 import { blue } from './colors/00f'
@@ -229,9 +229,10 @@ function App() {
 		? (game.board.find(c => c.code === game.target)?.name[lang] ?? '')
 		: name
 
-	// UI-string translator, following the selected color-name language (falls
-	// back to English for any missing key)
-	const t = translator(lang)
+	// UI-string translator, following the interface language chosen in settings
+	// (independent of the content/color-name language; falls back to English)
+	const t = translator(settings.uiLanguage)
+	const setUiLanguage = (code: string) => updateSettings({ ...settings, uiLanguage: code as Language })
 
 	// shrink the display font before falling back to the marquee
 	const displayRef = useFitText(displayText)
@@ -288,6 +289,9 @@ function App() {
 						cachedCount={cachedCount}
 						locked={game.gameOn}
 						t={t}
+						uiLanguage={settings.uiLanguage}
+						uiLanguages={UI_LANGUAGES}
+						onSetUiLanguage={setUiLanguage}
 						onChange={updateSettings}
 						onSetSort={setSort}
 						onClearCache={clearSoundCache}

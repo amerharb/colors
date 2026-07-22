@@ -41,5 +41,6 @@
 	"group.theme": "Tema",
 	"group.sort": "Sortera färger",
 	"group.languages": "Språk",
-	"group.colors": "Färger"
+	"group.colors": "Färger",
+	"uiLanguage": "Gränssnittsspråk"
 }
