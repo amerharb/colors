@@ -2,6 +2,10 @@
 
 ## [0.16.0] 2026-07-20
 ### Added
+- Localize the interface: all UI text (button tooltips, the "select a language
+  and color to play" hint, settings labels, game score/actions) now lives in
+  `src/i18n/*.json` and follows the selected color-name language (English,
+  Arabic, German, Swedish), falling back to English for any missing string
 - Add Pink `#F7B` and Purple `#707` (with spoken names in all four languages)
 ### Changed
 - Re-code Orange `f80` → `f70`: the `8` was a mistake, and `7` is the halfway
