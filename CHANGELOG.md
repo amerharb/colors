@@ -16,6 +16,9 @@
   UI, "Arabisch" in a German UI — falling back to the native name for any
   untranslated pair. The interface-language dropdown itself keeps native names
   (English, عربي, Deutsch, Svenska) so it is always self-findable
+- Sort the content-language options (top dropdown and settings checklist)
+  alphabetically by their displayed name, using the interface language's
+  collation (so the order updates with the UI language)
 - Add Pink `#F7B` and Purple `#707` (with spoken names in all four languages)
 ### Changed
 - Re-code Orange `f80` → `f70`: the `8` was a mistake, and `7` is the halfway

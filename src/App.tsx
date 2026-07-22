@@ -234,6 +234,12 @@ function App() {
 	const t = translator(settings.uiLanguage)
 	const setUiLanguage = (code: string) => updateSettings({ ...settings, uiLanguage: code as Language })
 
+	// content languages as { code, display } with names in the UI language,
+	// sorted alphabetically by that display name (using the UI language's collation)
+	const localizedContent = (list: { code: Language, display: string }[]) => list
+		.map(l => ({ code: l.code, display: languageName(t, l.code, l.display) }))
+		.sort((a, b) => a.display.localeCompare(b.display, settings.uiLanguage))
+
 	// shrink the display font before falling back to the marquee
 	const displayRef = useFitText(displayText)
 
@@ -277,13 +283,13 @@ function App() {
 							audio.stopSound()
 						}}
 					>
-						{LANGUAGES.map(l => (
-							<option key={`lang-${l.code}`} value={l.code}>{languageName(t, l.code, l.display)}</option>
+						{localizedContent(LANGUAGES).map(l => (
+							<option key={`lang-${l.code}`} value={l.code}>{l.display}</option>
 						))}
 					</select>
 					<SettingsPanel
 						settings={settings}
-						languages={ALL_LANGUAGES.map(l => ({ code: l.code, display: languageName(t, l.code, l.display) }))}
+						languages={localizedContent(ALL_LANGUAGES)}
 						colors={ALL_COLORS.map(c => ({ code: c.code }))}
 						caching={caching}
 						cachedCount={cachedCount}
