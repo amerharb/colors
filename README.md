@@ -86,9 +86,8 @@ To add a language:
 
 ## Credits
 ### For sound
-Color name pronunciations synthesized with the macOS `say` text-to-speech
-voices: English (Samantha), German (Anna) and Swedish (Alva). Arabic uses the
-more natural Amany voice (Microsoft Edge neural text-to-speech, Syrian
-Arabic), like the sister projects.
+Color name pronunciations synthesized with Microsoft Edge neural
+text-to-speech voices: English (Ava), Arabic (Amany), German (Katja) and
+Swedish (Sofie), like the sister projects.
 The game's correct/wrong feedback sounds are shared with the
 [Flags](https://github.com/amerharb/flags) sister project.
