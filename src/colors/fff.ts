@@ -7,5 +7,6 @@ export const white: Color = {
 		ar: 'أبيض',
 		de: 'Weiß',
 		sv: 'Vit',
+		he: 'לבן',
 	},
 }

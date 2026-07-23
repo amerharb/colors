@@ -7,5 +7,6 @@ export const red: Color = {
 		ar: 'أحمر',
 		de: 'Rot',
 		sv: 'Röd',
+		he: 'אדום',
 	},
 }

@@ -7,5 +7,6 @@ export const orange: Color = {
 		ar: 'برتقالي',
 		de: 'Orange',
 		sv: 'Orange',
+		he: 'כתום',
 	},
 }

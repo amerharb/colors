@@ -7,5 +7,6 @@ export const green: Color = {
 		ar: 'أخضر',
 		de: 'Grün',
 		sv: 'Grön',
+		he: 'ירוק',
 	},
 }

@@ -45,34 +45,37 @@ export const DEFAULT_SETTINGS: Settings = {
 
 const STORAGE_KEY = 'colors:settings'
 
-// all supported languages that a browser locale can match
-const SPOKEN_LANGUAGES: Language[] = ['en', 'ar', 'de', 'sv']
+// every content language a browser locale can match (the color-name dropdown)
+const SPOKEN_LANGUAGES: Language[] = ['en', 'ar', 'de', 'sv', 'he']
+// the subset offered as interface languages (those with an i18n dictionary)
+const UI_LANGUAGE_CODES: Language[] = ['en', 'ar', 'de', 'sv']
 
-// map a BCP-47 tag (e.g. "en-US", "sv") to one of our language codes, or null
-function tagToLanguage(tag: string): Language | null {
+// map a BCP-47 tag (e.g. "en-US", "sv") to one of the given codes, or null
+function tagToCode(tag: string, set: readonly Language[]): Language | null {
 	const primary = tag.toLowerCase().split('-')[0]
-	return (SPOKEN_LANGUAGES as string[]).includes(primary) ? primary as Language : null
+	return (set as readonly string[]).includes(primary) ? primary as Language : null
 }
 
-// the browser's preferred language, mapped to a supported code (falls back to English)
+// the browser's preferred content language, mapped to a supported code (falls back to English)
 export function preferredLanguage(): Language {
 	const tag = (typeof navigator !== 'undefined' && navigator.language) || ''
-	return tagToLanguage(tag) ?? 'en'
+	return tagToCode(tag, SPOKEN_LANGUAGES) ?? 'en'
 }
 
-// the first-run interface language:
+// the first-run interface language (restricted to the UI subset):
 //   1) the browser's primary language, if a supported UI language
-//   2) else the first of the browser's other languages that is supported
-//   3) else the content-language pick (which itself falls back to English)
+//   2) else the first of the browser's other languages that is a UI language
+//   3) else the content-language pick if it is a UI language, else English
 export function preferredUiLanguage(): Language {
-	const primary = tagToLanguage((typeof navigator !== 'undefined' && navigator.language) || '')
+	const primary = tagToCode((typeof navigator !== 'undefined' && navigator.language) || '', UI_LANGUAGE_CODES)
 	if (primary) return primary
 	const tags = (typeof navigator !== 'undefined' && navigator.languages) || []
 	for (const tag of tags) {
-		const m = tagToLanguage(tag)
+		const m = tagToCode(tag, UI_LANGUAGE_CODES)
 		if (m) return m
 	}
-	return preferredLanguage()
+	const content = preferredLanguage()
+	return (UI_LANGUAGE_CODES as string[]).includes(content) ? content : 'en'
 }
 
 // first-run settings: show only the browser's languages (navigator.languages) plus
@@ -80,7 +83,7 @@ export function preferredUiLanguage(): Language {
 // browser too (see preferredUiLanguage).
 function firstRunSettings(): Settings {
 	const tags = (typeof navigator !== 'undefined' && navigator.languages) || []
-	const visible = new Set<Language>(tags.map(tagToLanguage).filter(Boolean) as Language[])
+	const visible = new Set<Language>(tags.map(t => tagToCode(t, SPOKEN_LANGUAGES)).filter(Boolean) as Language[])
 	visible.add(preferredLanguage())
 	const hiddenLanguages = SPOKEN_LANGUAGES.filter(code => !visible.has(code))
 	return { ...DEFAULT_SETTINGS, uiLanguage: preferredUiLanguage(), hiddenLanguages }

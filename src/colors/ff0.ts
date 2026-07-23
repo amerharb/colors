@@ -7,5 +7,6 @@ export const yellow: Color = {
 		ar: 'أصفر',
 		de: 'Gelb',
 		sv: 'Gul',
+		he: 'צהוב',
 	},
 }

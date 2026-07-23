@@ -7,6 +7,7 @@ export const teal: Color = {
 		ar: 'بترولي',
 		de: 'Petrol',
 		sv: 'Petrol',
+		he: 'כחול נפט',
 	},
 	beta: true,
 }

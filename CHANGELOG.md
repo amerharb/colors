@@ -25,6 +25,9 @@
   flag to promote to production)
 - Add Cyan `0ff` and Teal `077` with spoken names and neural recordings in all
   four languages (beta)
+- Add Hebrew (עברית) as a content (color-name) language, with names and Microsoft
+  Edge neural recordings (he-IL-Hila) for every color. It is a content language
+  only — the interface stays limited to the four localized UI languages
 ### Changed
 - Re-code Orange `f80` → `f70`: the `8` was a mistake, and `7` is the halfway
   point to `f` so the colors keep even hex steps (the spoken name is unchanged,

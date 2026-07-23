@@ -7,5 +7,6 @@ export const pink: Color = {
 		ar: 'وردي',
 		de: 'Rosa',
 		sv: 'Rosa',
+		he: 'ורוד',
 	},
 }

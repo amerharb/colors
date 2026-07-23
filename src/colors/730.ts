@@ -7,6 +7,7 @@ export const brown: Color = {
 		ar: 'بني',
 		de: 'Braun',
 		sv: 'Brun',
+		he: 'חום',
 	},
 	beta: true,
 }

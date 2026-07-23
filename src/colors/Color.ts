@@ -1,4 +1,4 @@
-export type Language = 'en' | 'ar' | 'de' | 'sv'
+export type Language = 'en' | 'ar' | 'de' | 'sv' | 'he'
 
 export type Color = {
     code: string,

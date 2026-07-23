@@ -7,5 +7,6 @@ export const black: Color = {
 		ar: 'أسود',
 		de: 'Schwarz',
 		sv: 'Svart',
+		he: 'שחור',
 	},
 }

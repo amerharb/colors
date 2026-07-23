@@ -7,6 +7,7 @@ export const cyan: Color = {
 		ar: 'سماوي',
 		de: 'Cyan',
 		sv: 'Cyan',
+		he: 'ציאן',
 	},
 	beta: true,
 }

@@ -7,5 +7,6 @@ export const blue: Color = {
 		ar: 'أزرق',
 		de: 'Blau',
 		sv: 'Blå',
+		he: 'כחול',
 	},
 }

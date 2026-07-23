@@ -7,5 +7,6 @@ export const purple: Color = {
 		ar: 'بنفسجي',
 		de: 'Lila',
 		sv: 'Lila',
+		he: 'סגול',
 	},
 }

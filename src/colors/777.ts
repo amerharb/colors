@@ -7,6 +7,7 @@ export const gray: Color = {
 		ar: 'رمادي',
 		de: 'Grau',
 		sv: 'Grå',
+		he: 'אפור',
 	},
 	beta: true,
 }
