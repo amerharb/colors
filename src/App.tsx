@@ -23,7 +23,9 @@ import { black } from './colors/000'
 import { brown } from './colors/730'
 import { gray } from './colors/777'
 import { purple } from './colors/707'
+import { teal } from './colors/077'
 import { blue } from './colors/00f'
+import { cyan } from './colors/0ff'
 import { green } from './colors/0f0'
 import { red } from './colors/f00'
 import { orange } from './colors/f70'
@@ -61,7 +63,7 @@ function sortColors(colors: Color[], mode: SortMode, lang: Language, hasLanguage
 
 function App() {
 	// everything the build supports (after the beta feature flag)
-	const ALL_COLORS: Color[] = [black, purple, blue, green, red, orange, pink, yellow, white, gray, brown].filter(isVisible)
+	const ALL_COLORS: Color[] = [black, purple, blue, green, red, orange, pink, yellow, white, gray, brown, cyan, teal].filter(isVisible)
 	const LANGUAGE_DEFS: { code: Language, display: string, beta?: boolean }[] = [
 		{ code: 'en', display: 'English' },
 		{ code: 'ar', display: 'عربي' },

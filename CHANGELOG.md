@@ -23,6 +23,8 @@
 - Add Gray and Brown with spoken names and Microsoft Edge neural recordings
   (Ava, Amany, Katja, Sofie) in all four languages (beta — remove the `beta`
   flag to promote to production)
+- Add Cyan `0ff` and Teal `077` with spoken names and neural recordings in all
+  four languages (beta)
 ### Changed
 - Re-code Orange `f80` → `f70`: the `8` was a mistake, and `7` is the halfway
   point to `f` so the colors keep even hex steps (the spoken name is unchanged,
