@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.15.0-blue.svg)](https://github.com/amerharb/colors)
+[![Version](https://img.shields.io/badge/version-0.16.0-blue.svg)](https://github.com/amerharb/colors)
 # Colors
 
 Small react project to show colors (as swatches) and display the color name in
@@ -7,10 +7,12 @@ the selected language. Sister project of
 
 ## Colors supported
 - Red `#F00`
-- Orange `#F80`
+- Orange `#F70`
+- Pink `#F7B`
 - Yellow `#FF0`
 - Green `#0F0`
 - Blue `#00F`
+- Purple `#707`
 - Black `#000`
 - White `#FFF`
 
@@ -46,8 +48,9 @@ hear its name spoken and see it written in that language. Click the swatch again
   while muted), and the 👂 button plays it again. When every color has been played the round is over — the clock
   freezes and the score stays — but game mode stays on: ✋ stops a round
   early, 🔄 starts a fresh one, and pressing 🕹️ again leaves game mode. Theme and flight mode stay
-  changeable mid-game; the language and color lists are locked. Needs at least
-  one language and one color visible.
+  changeable mid-game; the language and color lists are locked, and the selected
+  language can be changed only between rounds (after ✋ or when a round
+  finishes). Needs at least one language and one color visible.
 - First visit: the starting language and which languages are shown come from your
   browser's language settings.
 
@@ -85,7 +88,8 @@ To add a language:
 
 ## Credits
 ### For sound
-Color name pronunciations synthesized with the macOS `say` text-to-speech
-voices: English (Samantha), Arabic (Majed), German (Anna) and Swedish (Alva).
+Color name pronunciations synthesized with Microsoft Edge neural
+text-to-speech voices: English (Ava), Arabic (Amany), German (Katja) and
+Swedish (Sofie), like the sister projects.
 The game's correct/wrong feedback sounds are shared with the
 [Flags](https://github.com/amerharb/flags) sister project.

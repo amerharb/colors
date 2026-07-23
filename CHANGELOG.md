@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.16.0] 2026-07-20
+### Added
+- Localize the interface: all UI text (button tooltips, the "select a language
+  and color to play" hint, settings labels, game score/actions) now lives in
+  `src/i18n/*.json`, falling back to English for any missing string
+- Add an interface-language dropdown (👁️) to the settings panel with the four
+  localized languages (English, Arabic, German, Swedish). It is now a separate,
+  persisted setting — independent of the content/color-name dropdown — so the
+  UI and the color names can be in different languages. On first run it follows
+  the browser (primary language, then any of the browser's languages, else the
+  content-language pick, else English)
+- Show the content-language names (in the top dropdown and the settings
+  checklist) in the current interface language — e.g. "Arabic" in an English
+  UI, "Arabisch" in a German UI — falling back to the native name for any
+  untranslated pair. The interface-language dropdown itself keeps native names
+  (English, عربي, Deutsch, Svenska) so it is always self-findable
+- Sort the content-language options (top dropdown and settings checklist)
+  alphabetically by their displayed name, using the interface language's
+  collation (so the order updates with the UI language)
+- Add Pink `#F7B` and Purple `#707` (with spoken names in all four languages)
+- Add Gray and Brown with spoken names and Microsoft Edge neural recordings
+  (Ava, Amany, Katja, Sofie) in all four languages (beta — remove the `beta`
+  flag to promote to production)
+### Changed
+- Re-code Orange `f80` → `f70`: the `8` was a mistake, and `7` is the halfway
+  point to `f` so the colors keep even hex steps (the spoken name is unchanged,
+  the sound files moved to the new code). A shared link with the old `?c=f80`
+  no longer matches Orange
+- Replace all the color-name recordings with more natural Microsoft Edge
+  neural text-to-speech voices — Ava (English), Amany (Arabic), Katja (German)
+  and Sofie (Swedish), the same roster as the sister projects — instead of the
+  old macOS `say` voices (Samantha, Majed, Anna, Alva). If the old files are
+  already in the sound cache, clear it (🗑️) to hear the new voices
+- In game mode with the round stopped (finished or ✋), the selected language
+  can be changed again — the next 🔄 round uses it. It stays locked while a
+  round is running, and showing or hiding languages/items in settings stays
+  locked for the whole game mode
+- Internal refactor (no behaviour change): App.tsx is split into focused
+  modules shared verbatim with the sister projects — `useAudio` (playback,
+  mute, feedback sounds), `useGame` (the round state machine), `GameHud` (the
+  score and action segments) and `useFitText` (the display shrink-to-fit) —
+  cutting App.tsx from ~615 to ~360 lines
+
 ## 0.15.0
 ### Fixed
 - Pressed and selected controls are now clearly visible in dark mode: a new
