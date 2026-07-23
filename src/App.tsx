@@ -20,6 +20,8 @@ import { useGame } from './useGame'
 import { useFitText } from './useFitText'
 import { translator, languageName, UI_LANGUAGES } from './i18n'
 import { black } from './colors/000'
+import { brown } from './colors/730'
+import { gray } from './colors/777'
 import { purple } from './colors/707'
 import { blue } from './colors/00f'
 import { green } from './colors/0f0'
@@ -59,7 +61,7 @@ function sortColors(colors: Color[], mode: SortMode, lang: Language, hasLanguage
 
 function App() {
 	// everything the build supports (after the beta feature flag)
-	const ALL_COLORS: Color[] = [black, purple, blue, green, red, orange, pink, yellow, white].filter(isVisible)
+	const ALL_COLORS: Color[] = [black, purple, blue, green, red, orange, pink, yellow, white, gray, brown].filter(isVisible)
 	const LANGUAGE_DEFS: { code: Language, display: string, beta?: boolean }[] = [
 		{ code: 'en', display: 'English' },
 		{ code: 'ar', display: 'عربي' },

@@ -20,6 +20,9 @@
   alphabetically by their displayed name, using the interface language's
   collation (so the order updates with the UI language)
 - Add Pink `#F7B` and Purple `#707` (with spoken names in all four languages)
+- Add Gray and Brown with spoken names and Microsoft Edge neural recordings
+  (Ava, Amany, Katja, Sofie) in all four languages (beta — remove the `beta`
+  flag to promote to production)
 ### Changed
 - Re-code Orange `f80` → `f70`: the `8` was a mistake, and `7` is the halfway
   point to `f` so the colors keep even hex steps (the spoken name is unchanged,
